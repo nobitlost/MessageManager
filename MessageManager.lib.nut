@@ -782,7 +782,7 @@ class MessageManager {
                         "id"   : payload["id"],
                         "data" : data
                     });
-                });
+                }.bindenv(this));
             }
         }
 
