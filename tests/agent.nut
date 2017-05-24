@@ -22,7 +22,7 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-@include "https://raw.githubusercontent.com/electricimp/ConnectionManager/master/ConnectionManager.class.nut"
+@include "https://raw.githubusercontent.com/electricimp/ConnectionManager/master/ConnectionManager.lib.nut"
 @include "MessageManager.lib.nut"
 
 class MyConnectionManager {
