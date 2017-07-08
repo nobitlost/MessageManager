@@ -24,16 +24,40 @@
 // "Promise" symbol is injected dependency from ImpUnit_Promise module,
 // while class being tested can be accessed from global scope as "::Promise".
 
-const MESSAGE_NAME = "test";
-const MESSAGE_WITHOUT_RESPONSE = "test_no_response";
-const MESSAGE_WITH_DELAY = "test_with_delay";
-const MESSAGE_WITH_HUGE_DELAY = "test_with_huge_delay";
+@include "github:electricimp/MessageManager/MessageManager.lib.nut"
+//@include __PATH__+"/MessageManager.lib.nut"
+@include __PATH__+"/ConnectionManager.nut"
+@include __PATH__+"/Constants.nut"
 
-const REPLY_NO_MESSAGES = "No messages";
-const BASIC_MESSAGE = "basic message";
+// EchoServer
+// This file should be included into agent or device code file, depending on witch one will be echo server (will respond with received message)
 
-const MESSAGE_WITH_DELAY_SLEEP = 2;
-const MESSAGE_WITH_DELAY_DEEP_SLEEP = 16;
+local cm = getConnectionManager();
+local onPartnerConnected = function(reply) {
+    cm.connect();
+    reply(REPLY_NO_MESSAGES);
+};
+local config = {
+    "onPartnerConnected": onPartnerConnected.bindenv(this),
+    "connectionManager" : cm
+};
 
-const ERR_REQ_RES_NOT_IDENTICAL = "Request and response messages are not identical";
-const ERR_REQ_RES_IDENTICAL = "Request and response messages are identical";
+local mm = MessageManager(config);
+
+mm.on(MESSAGE_NAME, function(message, reply) {
+    reply(message);
+}.bindenv(this));
+
+mm.on(MESSAGE_WITHOUT_RESPONSE, function(message, reply) {
+    // do nothing
+}.bindenv(this));
+
+mm.on(MESSAGE_WITH_DELAY, function(message, reply) {
+    imp.sleep(MESSAGE_WITH_DELAY_SLEEP);
+    reply(message);
+}.bindenv(this));
+
+mm.on(MESSAGE_WITH_HUGE_DELAY, function(message, reply) {
+    imp.sleep(MESSAGE_WITH_DELAY_DEEP_SLEEP);
+    reply(message);
+}.bindenv(this));

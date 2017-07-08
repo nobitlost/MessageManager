@@ -34,13 +34,13 @@
 class ConstructorTestCase extends ImpTestCase {
 
     // onPartnerConnected, onConnectedReply, connectionManager
-    function testConnection() {
+    function connection(dummy) {
         return Promise(function(resolve, reject) {
 
             local partnerConnected = false;
             local connectedReply = null;
 
-            local cm = getConnectionManager();
+            local cm = getConnectionManager(dummy);
             local onPartnerConnected = function(reply) {
                 partnerConnected = true;
             };
@@ -67,6 +67,16 @@ class ConstructorTestCase extends ImpTestCase {
             }.bindenv(this));
 
         }.bindenv(this));
+    }
+
+    // testConnection with dummy ConnectionManager
+    function testConnection() {
+        return connection(true);
+    }
+
+    // testConnection with real ConnectionManager
+    function testConnectionReal() {
+        return connection(false);
     }
 
     // firstMessageId, nextIdGenerator

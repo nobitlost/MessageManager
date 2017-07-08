@@ -24,40 +24,4 @@
 // "Promise" symbol is injected dependency from ImpUnit_Promise module,
 // while class being tested can be accessed from global scope as "::Promise".
 
-@include "github:electricimp/MessageManager/MessageManager.lib.nut"
-//@include __PATH__+"/../MessageManager.lib.nut"
-@include __PATH__+"/../ConnectionManager.nut"
-@include __PATH__+"/../Constants.nut"
-
-// EchoServer
-// This file should be included into agent or device code file, depending on witch one will be echo server (will respond with received message)
-
-local cm = getConnectionManager();
-local onPartnerConnected = function(reply) {
-    cm.connect();
-    reply(REPLY_NO_MESSAGES);
-};
-local config = {
-    "onPartnerConnected": onPartnerConnected.bindenv(this),
-    "connectionManager" : cm
-};
-
-local mm = MessageManager(config);
-
-mm.on(MESSAGE_NAME, function(message, reply) {
-    reply(message);
-}.bindenv(this));
-
-mm.on(MESSAGE_WITHOUT_RESPONSE, function(message, reply) {
-    // do nothing
-}.bindenv(this));
-
-mm.on(MESSAGE_WITH_DELAY, function(message, reply) {
-    imp.sleep(MESSAGE_WITH_DELAY_SLEEP);
-    reply(message);
-}.bindenv(this));
-
-mm.on(MESSAGE_WITH_HUGE_DELAY, function(message, reply) {
-    imp.sleep(MESSAGE_WITH_DELAY_DEEP_SLEEP);
-    reply(message);
-}.bindenv(this));
+@include __PATH__+"/../../EchoServer.nut"

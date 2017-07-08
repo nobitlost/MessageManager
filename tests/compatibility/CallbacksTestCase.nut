@@ -24,8 +24,8 @@
 // "Promise" symbol is injected dependency from ImpUnit_Promise module,
 // while class being tested can be accessed from global scope as "::Promise".
 
-@include "github:electricimp/MessageManager/MessageManager.lib.nut"
-//@include __PATH__+"/../MessageManager.lib.nut"
+//@include "github:electricimp/MessageManager/MessageManager.lib.nut"
+@include __PATH__+"/../MessageManager.lib.nut"
 @include __PATH__+"/../ConnectionManager.nut"
 @include __PATH__+"/../Constants.nut"
 
