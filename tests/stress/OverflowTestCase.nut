@@ -27,12 +27,16 @@
 //@include "github:electricimp/MessageManager/MessageManager.lib.nut"
 @include __PATH__+"/../MessageManager.lib.nut"
 @include __PATH__+"/../ConnectionManager.nut"
-@include __PATH__+"/../Constants.nut"
+@include __PATH__+"/../Base.nut"
 
 // OverflowTestCase
 // Tests for MessageManager.send, MessageManager.on
 class OverflowTestCase extends ImpTestCase {
 
+    function setUp() {
+        infoAboutSide();
+    }
+    
     function testFullReply() {
         local total = 500;
         local max_rate = 500;

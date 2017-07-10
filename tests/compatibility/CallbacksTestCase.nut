@@ -27,12 +27,16 @@
 //@include "github:electricimp/MessageManager/MessageManager.lib.nut"
 @include __PATH__+"/../MessageManager.lib.nut"
 @include __PATH__+"/../ConnectionManager.nut"
-@include __PATH__+"/../Constants.nut"
+@include __PATH__+"/../Base.nut"
 
 // CallbacksTestCase
 // Tests for MessageManager.onFail MessageManager.onTimeout, MessageManager.onAck, MessageManager.onReply
 class CallbacksTestCase extends ImpTestCase {
 
+    function setUp() {
+        infoAboutSide();
+    }
+    
     function testOnFail() {
         return Promise(function(resolve, reject) {
 

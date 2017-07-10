@@ -24,15 +24,19 @@
 // "Promise" symbol is injected dependency from ImpUnit_Promise module,
 // while class being tested can be accessed from global scope as "::Promise".
 
-@include "github:electricimp/MessageManager/MessageManager.lib.nut"
-//@include __PATH__+"/../MessageManager.lib.nut"
+//@include "github:electricimp/MessageManager/MessageManager.lib.nut"
+@include __PATH__+"/../MessageManager.lib.nut"
 @include __PATH__+"/../ConnectionManager.nut"
-@include __PATH__+"/../Constants.nut"
+@include __PATH__+"/../Base.nut"
 
 // ConstructorTestCase
 // Tests for MessageManager constructor options
 class ConstructorTestCase extends ImpTestCase {
 
+    function setUp() {
+        infoAboutSide();
+    }
+    
     // onPartnerConnected, onConnectedReply, connectionManager
     function connection(dummy) {
         return Promise(function(resolve, reject) {
@@ -41,12 +45,16 @@ class ConstructorTestCase extends ImpTestCase {
             local connectedReply = null;
 
             local cm = getConnectionManager(dummy);
+
             local onPartnerConnected = function(reply) {
+                isAgentSide() && cm.connect();
+                reply(REPLY_NO_MESSAGES);
                 partnerConnected = true;
-            };
+            }.bindenv(this);
+
             local onConnectedReply = function(data) {
                 connectedReply = data;
-            };
+            }.bindenv(this);
 
             local mm = MessageManager({
                 "connectionManager":  cm,
@@ -54,9 +62,7 @@ class ConstructorTestCase extends ImpTestCase {
                 "onConnectedReply":   onConnectedReply.bindenv(this)
             });
 
-            cm.connect();
-
-            imp.wakeup(1, function() {
+            imp.wakeup(2, function() {
                 try {
                     assertTrue(partnerConnected, "Partner is not connected");
                     assertEqual(REPLY_NO_MESSAGES, connectedReply, "Wrong connected reply: " + connectedReply);
@@ -76,7 +82,14 @@ class ConstructorTestCase extends ImpTestCase {
 
     // testConnection with real ConnectionManager
     function testConnectionReal() {
-        return connection(false);
+        if (isAgentSide()) {
+            info("ConnectionManager is a device-side only library, so we skip this test that running on the agent");
+            return Promise(function(resolve, reject) {
+                resolve();
+            });
+        } else {
+            return connection(false);
+        }
     }
 
     // firstMessageId, nextIdGenerator

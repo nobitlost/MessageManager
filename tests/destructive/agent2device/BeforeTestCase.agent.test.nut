@@ -24,16 +24,4 @@
 // "Promise" symbol is injected dependency from ImpUnit_Promise module,
 // while class being tested can be accessed from global scope as "::Promise".
 
-const MESSAGE_NAME = "test";
-const MESSAGE_WITHOUT_RESPONSE = "test_no_response";
-const MESSAGE_WITH_DELAY = "test_with_delay";
-const MESSAGE_WITH_HUGE_DELAY = "test_with_huge_delay";
-
-const REPLY_NO_MESSAGES = "No messages";
-const BASIC_MESSAGE = "basic message";
-
-const MESSAGE_WITH_DELAY_SLEEP = 2;
-const MESSAGE_WITH_DELAY_DEEP_SLEEP = 16;
-
-const ERR_REQ_RES_NOT_IDENTICAL = "Request and response messages are not identical";
-const ERR_REQ_RES_IDENTICAL = "Request and response messages are identical";
+@include __PATH__+"/../BeforeTestCase.nut"

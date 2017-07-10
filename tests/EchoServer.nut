@@ -24,25 +24,25 @@
 // "Promise" symbol is injected dependency from ImpUnit_Promise module,
 // while class being tested can be accessed from global scope as "::Promise".
 
-@include "github:electricimp/MessageManager/MessageManager.lib.nut"
-//@include __PATH__+"/MessageManager.lib.nut"
+//@include "github:electricimp/MessageManager/MessageManager.lib.nut"
+@include __PATH__+"/MessageManager.lib.nut"
 @include __PATH__+"/ConnectionManager.nut"
-@include __PATH__+"/Constants.nut"
+@include __PATH__+"/Base.nut"
 
 // EchoServer
 // This file should be included into agent or device code file, depending on witch one will be echo server (will respond with received message)
 
 local cm = getConnectionManager();
+
 local onPartnerConnected = function(reply) {
-    cm.connect();
+    isAgentSide() && cm.connect();
     reply(REPLY_NO_MESSAGES);
 };
-local config = {
-    "onPartnerConnected": onPartnerConnected.bindenv(this),
-    "connectionManager" : cm
-};
 
-local mm = MessageManager(config);
+local mm = MessageManager({
+    "connectionManager":  cm,
+    "onPartnerConnected": onPartnerConnected.bindenv(this)
+});
 
 mm.on(MESSAGE_NAME, function(message, reply) {
     reply(message);
@@ -60,4 +60,15 @@ mm.on(MESSAGE_WITH_DELAY, function(message, reply) {
 mm.on(MESSAGE_WITH_HUGE_DELAY, function(message, reply) {
     imp.sleep(MESSAGE_WITH_DELAY_DEEP_SLEEP);
     reply(message);
+}.bindenv(this));
+
+mm.on(MESSAGE_DESTRUCTIVE_RESEND, function(message, reply) {
+    try {
+        mm.onAck(function(msg) {
+            reply("OK");
+        }.bindenv(this));
+        mm.send(MESSAGE_DESTRUCTIVE_RESEND_RESPONSE, message);
+    } catch (ex) {
+        reply(ex);
+    }
 }.bindenv(this));

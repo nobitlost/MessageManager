@@ -24,15 +24,19 @@
 // "Promise" symbol is injected dependency from ImpUnit_Promise module,
 // while class being tested can be accessed from global scope as "::Promise".
 
-@include "github:electricimp/MessageManager/MessageManager.lib.nut"
-//@include __PATH__+"/../MessageManager.lib.nut"
+//@include "github:electricimp/MessageManager/MessageManager.lib.nut"
+@include __PATH__+"/../MessageManager.lib.nut"
 @include __PATH__+"/../ConnectionManager.nut"
-@include __PATH__+"/../Constants.nut"
+@include __PATH__+"/../Base.nut"
 
 // BeforeTestCase
 // Tests for MessageManager.beforeSend, MessageManager.beforeRetry
 class BeforeTestCase extends ImpTestCase {
 
+    function setUp() {
+        infoAboutSide();
+    }
+    
     function testBeforeSendEnqueue() {
         return Promise(function(resolve, reject) {
 
@@ -72,6 +76,7 @@ class BeforeTestCase extends ImpTestCase {
         return Promise(function(resolve, reject) {
 
             local counter = 0;
+            local err = "Some kind of error";
             local mm = MessageManager();
             local send = function() {
                 mm.send(MESSAGE_NAME, BASIC_MESSAGE);
@@ -80,7 +85,7 @@ class BeforeTestCase extends ImpTestCase {
             mm.beforeSend(function(msg, enqueue, drop) {
                 counter++;
                 if (counter == 1) {
-                    drop(false);
+                    drop(false, err);
                 }
             }.bindenv(this));
 
@@ -96,7 +101,12 @@ class BeforeTestCase extends ImpTestCase {
 
             mm.onFail(function(msg, reason, retry) {
                 if (counter == 1) {
-                    send();
+                    try {
+                        assertEqual(err, reason, "Wrong reason provided: " + reason);
+                        send();
+                    } catch (ex) {
+                        reject(ex);
+                    }
                 } else {
                     reject("onFail handler called. Reason: " + reason);
                 }
