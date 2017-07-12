@@ -24,8 +24,7 @@
 // "Promise" symbol is injected dependency from ImpUnit_Promise module,
 // while class being tested can be accessed from global scope as "::Promise".
 
-//@include "github:electricimp/MessageManager/MessageManager.lib.nut"
-@include __PATH__+"/../MessageManager.lib.nut"
+@include "github:electricimp/MessageManager/MessageManager.lib.nut"
 @include __PATH__+"/../ConnectionManager.nut"
 @include __PATH__+"/../Base.nut"
 
@@ -39,19 +38,19 @@ class CallbacksTestCase extends ImpTestCase {
     
     function testOnFail() {
         return Promise(function(resolve, reject) {
-
             local counter = 0;
             local cm = getConnectionManager();
             local mm = MessageManager({
+                "firstMessageId":    msgId,
+                "nextIdGenerator":   msgIdGenerator,
                 "connectionManager": cm
             });
-
             mm.onFail(function(msg, reason, retry) {
                 try {
                     counter++;
-                    assertEqual(MESSAGE_NAME, msg.payload.name, "Wrong msg.payload.name: " + msg.payload.name);
-                    assertEqual(BASIC_MESSAGE, msg.payload.data, "Wrong msg.payload.data: " + msg.payload.data);
-                    assertEqual(MM_ERR_NO_CONNECTION, reason, "Wrong reason: " + reason);
+                    assertDeepEqualWrap(MESSAGE_NAME, msg.payload.name, "Wrong msg.payload.name");
+                    assertDeepEqualWrap(BASIC_MESSAGE, msg.payload.data, "Wrong msg.payload.data");
+                    assertDeepEqualWrap(MM_ERR_NO_CONNECTION, reason, "Wrong reason");
                     if (counter == 1) {
                         cm.connect();
                         retry();
@@ -63,51 +62,48 @@ class CallbacksTestCase extends ImpTestCase {
                     reject(ex);
                 }
             }.bindenv(this));
-
             mm.onReply(function(msg, response) {
                 reject("onReply handler called");
             }.bindenv(this));
-
             mm.send(MESSAGE_NAME, BASIC_MESSAGE);
             cm.disconnect();
-
         }.bindenv(this));
     }
 
     function testOnTimeout() {
         return Promise(function(resolve, reject) {
-
             local counter = 0;
             local ts = 0;
             local messageTimeout = 2;
             local messageTimeoutInc = 0;
             local mm = MessageManager({
-                "messageTimeout": messageTimeout
+                "firstMessageId":  msgId,
+                "nextIdGenerator": msgIdGenerator,
+                "messageTimeout":  messageTimeout
             });
-
             mm.onTimeout(function(msg, wait, fail) {
                 try {
                     counter++;
-                    assertEqual(MESSAGE_WITH_HUGE_DELAY, msg.payload.name, "Wrong msg.payload.name: " + msg.payload.name);
-                    assertEqual(BASIC_MESSAGE, msg.payload.data, "Wrong msg.payload.data: " + msg.payload.data);
+                    assertDeepEqualWrap(MESSAGE_WITH_HUGE_DELAY, msg.payload.name, "Wrong msg.payload.name");
+                    assertDeepEqualWrap(BASIC_MESSAGE, msg.payload.data, "Wrong msg.payload.data");
                     if (ts == 0) {
                         ts = time();
                     }
                     local shift = time() - ts;
                     switch (counter) {
                         case 1:
-                            assertEqual(messageTimeoutInc, shift, "Wrong message timeout(1): " + shift + ", should be " + messageTimeoutInc);
+                            assertDeepEqualWrap(messageTimeoutInc, shift, "Wrong message timeout(1)");
                             messageTimeoutInc += messageTimeout;
                             wait();
                             break;
                         case 2:
-                            assertEqual(messageTimeoutInc, shift, "Wrong message timeout(2): " + shift + ", should be " + messageTimeoutInc);
-                            local w8 = 5;
+                            assertDeepEqualWrap(messageTimeoutInc, shift, "Wrong message timeout(2)");
+                            local w8 = 2;
                             messageTimeoutInc += w8;
                             wait(w8);
                             break;
                         case 3:
-                            assertEqual(messageTimeoutInc, shift, "Wrong message timeout(3): " + shift + ", should be " + messageTimeoutInc);
+                            assertDeepEqualWrap(messageTimeoutInc, shift, "Wrong message timeout(3)");
                             fail();
                             break;
                     }
@@ -115,7 +111,6 @@ class CallbacksTestCase extends ImpTestCase {
                     reject(ex);
                 }
             }.bindenv(this));
-
             mm.onFail(function(msg, reason, retry) {
                 if (counter == 3) {
                     resolve();
@@ -123,60 +118,53 @@ class CallbacksTestCase extends ImpTestCase {
                     reject("onFail handler called. Reason: " + reason);
                 }
             }.bindenv(this));
-
             mm.onReply(function(msg, response) {
                 reject("onReply handler called");
             }.bindenv(this));
-
             mm.send(MESSAGE_WITH_HUGE_DELAY, BASIC_MESSAGE);
-
         }.bindenv(this));
     }
 
     function testOnAck() {
         return Promise(function(resolve, reject) {
-
-            local mm = MessageManager();
-
+            local mm = MessageManager({
+                "firstMessageId":  msgId,
+                "nextIdGenerator": msgIdGenerator
+            });
             mm.onFail(function(msg, reason, retry) {
                 reject("onFail handler called. Reason: " + reason);
             }.bindenv(this));
-
             mm.onReply(function(msg, response) {
                 reject("onReply handler called");
             }.bindenv(this));
-
             mm.onAck(function(msg) {
                 try {
-                    assertEqual(BASIC_MESSAGE, msg.payload.data, ERR_REQ_RES_NOT_IDENTICAL);
+                    assertDeepEqualWrap(BASIC_MESSAGE, msg.payload.data, ERR_REQ_RES_NOT_IDENTICAL);
                     resolve();
                 } catch (ex) {
                     reject(ex);
                 }
             }.bindenv(this))
-
             mm.send(MESSAGE_WITHOUT_RESPONSE, BASIC_MESSAGE);
-
         }.bindenv(this));
     }
 
     function testOnReply() {
         return Promise(function(resolve, reject) {
-
-            local mm = MessageManager();
-
+            local mm = MessageManager({
+                "firstMessageId":  msgId,
+                "nextIdGenerator": msgIdGenerator
+            });
             mm.onReply(function(msg, response) {
                 try {
-                    assertEqual(BASIC_MESSAGE, response.data, ERR_REQ_RES_NOT_IDENTICAL);
-                    assertEqual(BASIC_MESSAGE, msg.payload.data, ERR_REQ_RES_NOT_IDENTICAL);
+                    assertDeepEqualWrap(BASIC_MESSAGE, response.data, ERR_REQ_RES_NOT_IDENTICAL);
+                    assertDeepEqualWrap(BASIC_MESSAGE, msg.payload.data, ERR_REQ_RES_NOT_IDENTICAL);
                     resolve();
                 } catch (ex) {
                     reject(ex);
                 }
             }.bindenv(this));
-
             mm.send(MESSAGE_NAME, BASIC_MESSAGE);
-
         }.bindenv(this));
     }
 }

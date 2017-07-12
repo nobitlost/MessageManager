@@ -24,15 +24,14 @@
 // "Promise" symbol is injected dependency from ImpUnit_Promise module,
 // while class being tested can be accessed from global scope as "::Promise".
 
-//@include "github:electricimp/MessageManager/MessageManager.lib.nut"
-@include __PATH__+"/../MessageManager.lib.nut"
+@include "github:electricimp/MessageManager/MessageManager.lib.nut"
 @include __PATH__+"/../ConnectionManager.nut"
 @include __PATH__+"/../Base.nut"
 @include __PATH__+"/BaseDestructive.nut"
 
-// BeforeTestCase
+// DestBeforeTestCase
 // Destructive tests for MessageManager.beforeSend, MessageManager.beforeRetry
-class BeforeTestCase extends ImpTestCase {
+class DestBeforeTestCase extends ImpTestCase {
 
     function setUp() {
         infoAboutSide();
@@ -41,13 +40,16 @@ class BeforeTestCase extends ImpTestCase {
     function testBeforeSendWithReturn() {
         local execute = function(value) {
             return Promise(function(resolve, reject) {
-                local mm = MessageManager();
+                local mm = MessageManager({
+                    "firstMessageId":  msgId,
+                    "nextIdGenerator": msgIdGenerator
+                });
                 mm.beforeSend(function(msg, enqueue, drop) {
                     return value;
                 }.bindenv(this));
                 mm.onReply(function(msg, response) {
                     try {
-                        assertDeepEqualWrap(BASIC_MESSAGE, response.data, ERR_REQ_RES_IDENTICAL, true);
+                        assertDeepEqualWrap(BASIC_MESSAGE, response.data, ERR_REQ_RES_IDENTICAL);
                         resolve();
                     } catch (ex) {
                         reject(ex);
@@ -56,29 +58,16 @@ class BeforeTestCase extends ImpTestCase {
                 mm.send(MESSAGE_NAME, BASIC_MESSAGE);
             }.bindenv(this));
         }.bindenv(this);
-
-        local options = [
-            null, 
-            true, 
-            0, 
-            -1, 
-            1, 
-            13.37, 
-            "String", 
-            [1, 2], 
-            {"counter": "this"}, 
-            blob(64), 
-            function(){},
-            EmptyClass()
-        ];
-
-        return createTestAll(execute, options, "only_successes");
+        return createTestAll(execute, DEST_OPTIONS.ALL_TYPES, "only_successes");
     }
 
     function testBeforeSendDropWrongParams() {
         local execute = function(pair) {
             return Promise(function(resolve, reject) {
-                local mm = MessageManager();
+                local mm = MessageManager({
+                    "firstMessageId":  msgId,
+                    "nextIdGenerator": msgIdGenerator
+                });
                 mm.beforeSend(function(msg, enqueue, drop) {
                     try {
                         drop(pair[0], pair[1]);
@@ -88,7 +77,7 @@ class BeforeTestCase extends ImpTestCase {
                 }.bindenv(this));
                 mm.onFail(function(msg, reason, retry) {
                     try {
-                        pair[1] != null && assertDeepEqualWrap(pair[1], reason, "Wrong reason provided: " + reason, true);
+                        pair[1] != null && assertDeepEqualWrap(pair[1], reason, "Wrong reason provided");
                         resolve();
                     } catch (ex) {
                         reject(ex);
@@ -97,33 +86,22 @@ class BeforeTestCase extends ImpTestCase {
                 mm.send(MESSAGE_NAME, BASIC_MESSAGE);
             }.bindenv(this));
         }.bindenv(this);
-
-        local options = [
-            [null, null],
-            [null, true],
-            [0, 0],
-            [false, 13.37],
-            [null, "String"],
-            [null, [1, 2]],
-            [null, {"counter": "this"}],
-            [null, blob(64)],
-            [null, function(){}],
-            [null, EmptyClass()]
-        ];
-
-        return createTestAll(execute, options, "only_successes");
+        return createTestAll(execute, DEST_OPTIONS.SPECIAL_FOR_DROP, "only_successes");
     }
 
     function testBeforeRetryWithReturn() {
         local execute = function(value) {
             return Promise(function(resolve, reject) {
-                local mm = MessageManager();
+                local mm = MessageManager({
+                    "firstMessageId":  msgId,
+                    "nextIdGenerator": msgIdGenerator
+                });
                 mm.beforeRetry(function(msg, skip, drop) {
                     return value;
                 }.bindenv(this));
                 mm.onReply(function(msg, response) {
                     try {
-                        assertDeepEqualWrap(BASIC_MESSAGE, response.data, ERR_REQ_RES_IDENTICAL, true);
+                        assertDeepEqualWrap(BASIC_MESSAGE, response.data, ERR_REQ_RES_IDENTICAL);
                         resolve();
                     } catch (ex) {
                         reject(ex);
@@ -132,23 +110,7 @@ class BeforeTestCase extends ImpTestCase {
                 mm.send(MESSAGE_NAME, BASIC_MESSAGE);
             }.bindenv(this));
         }.bindenv(this);
-
-        local options = [
-            null, 
-            true, 
-            0, 
-            -1, 
-            1, 
-            13.37, 
-            "String", 
-            [1, 2], 
-            {"counter": "this"}, 
-            blob(64), 
-            function(){},
-            EmptyClass()
-        ];
-
-        return createTestAll(execute, options, "only_successes");
+        return createTestAll(execute, DEST_OPTIONS.ALL_TYPES, "only_successes");
     }
 
     function testBeforeRetrySkipWrongParams() {
@@ -156,7 +118,9 @@ class BeforeTestCase extends ImpTestCase {
             return Promise(function(resolve, reject) {
                 local counter = 0;
                 local mm = MessageManager({
-                    "retryInterval": 1
+                    "firstMessageId":  msgId,
+                    "nextIdGenerator": msgIdGenerator,
+                    "retryInterval":   1
                 });
                 mm.beforeSend(function(msg, enqueue, drop) {
                     enqueue();
@@ -173,7 +137,6 @@ class BeforeTestCase extends ImpTestCase {
                                 resolve();
                                 break;
                         }
-                        
                     } catch (ex) {
                         reject("Catch drop: " + ex);
                     }
@@ -181,26 +144,16 @@ class BeforeTestCase extends ImpTestCase {
                 mm.send(MESSAGE_NAME, BASIC_MESSAGE);
             }.bindenv(this));
         }.bindenv(this);
-
-        local options = [
-            true, 
-            // Agent Runtime Error: ERROR: comparison between '1499709598' and '1499709598String'
-            //"String", 
-            [1, 2], 
-            {"counter": "this"}, 
-            blob(64), 
-            function(){},
-            EmptyClass()
-        ];
-
-        return createTestAll(execute, options, "only_fails");
+        return createTestAll(execute, DEST_OPTIONS.WO_CONCATENATION, "only_fails");
     }
 
     function testBeforeRetryDropWrongParams() {
         local execute = function(pair) {
             return Promise(function(resolve, reject) {
                 local mm = MessageManager({
-                    "retryInterval": 1
+                    "firstMessageId":  msgId,
+                    "nextIdGenerator": msgIdGenerator,
+                    "retryInterval":   1
                 });
                 mm.beforeSend(function(msg, enqueue, drop) {
                     enqueue();
@@ -214,7 +167,7 @@ class BeforeTestCase extends ImpTestCase {
                 }.bindenv(this));
                 mm.onFail(function(msg, reason, retry) {
                     try {
-                        pair[1] != null && assertDeepEqualWrap(pair[1], reason, "Wrong reason provided: " + reason, true);
+                        pair[1] != null && assertDeepEqualWrap(pair[1], reason, "Wrong reason provided");
                         resolve();
                     } catch (ex) {
                         reject(ex);
@@ -223,20 +176,6 @@ class BeforeTestCase extends ImpTestCase {
                 mm.send(MESSAGE_NAME, BASIC_MESSAGE);
             }.bindenv(this));
         }.bindenv(this);
-
-        local options = [
-            [null, null],
-            [null, true],
-            [0, 0],
-            [false, 13.37],
-            [null, "String"],
-            [null, [1, 2]],
-            [null, {"counter": "this"}],
-            [null, blob(64)],
-            [null, function(){}],
-            [null, EmptyClass()]
-        ];
-
-        return createTestAll(execute, options, "only_successes");
+        return createTestAll(execute, DEST_OPTIONS.SPECIAL_FOR_DROP, "only_successes");
     }
 }

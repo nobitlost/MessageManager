@@ -24,30 +24,37 @@
 // "Promise" symbol is injected dependency from ImpUnit_Promise module,
 // while class being tested can be accessed from global scope as "::Promise".
 
-//@include "github:electricimp/MessageManager/MessageManager.lib.nut"
-@include __PATH__+"/../MessageManager.lib.nut"
+@include "github:electricimp/MessageManager/MessageManager.lib.nut"
 @include __PATH__+"/../ConnectionManager.nut"
 @include __PATH__+"/../Base.nut"
 @include __PATH__+"/BaseDestructive.nut"
 
-// BasicTestCase
+// DestBasicTestCase
 // Destructive tests for MessageManager.send, MessageManager.on
-class BasicTestCase extends ImpTestCase {
+// MessageManager.send with wrong type of parameter 'timeout' leads to Runtime Error, so we omit this test
+class DestBasicTestCase extends ImpTestCase {
 
     function setUp() {
         infoAboutSide();
     }
     
-    function testSend() {
+    function testSendWithNonSerializableMessage() {
+        if (!isAgentSide()) {
+            // Device Runtime Error: ERROR: skipped unserialisable data
+            info("This test is not supported on the device-side, so we skip this test that running on the device");
+            return Promise(function(resolve, reject) {
+                resolve();
+            });
+        }
         local execute = function(message) {
             return Promise(function(resolve, reject) {
-                local mm = MessageManager();
+                local mm = MessageManager({
+                    "firstMessageId":  msgId,
+                    "nextIdGenerator": msgIdGenerator
+                });
                 mm.onReply(function(msg, response) {
                     try {
-                        assertDeepEqual(message, response.data, ERR_REQ_RES_IDENTICAL + ". " +
-                                                                "Type: " + typeof response.data + ". " +
-                                                                "Expected: '" + message + "'. " +
-                                                                "Got: '" + response.data + "'.");
+                        assertDeepEqualWrap(message, response.data, ERR_REQ_RES_IDENTICAL);
                         resolve();
                     } catch (ex) {
                         reject(ex);
@@ -62,11 +69,12 @@ class BasicTestCase extends ImpTestCase {
         }.bindenv(this);
 
         local options = [
-            [{"key": "value"}, function(){}], 
             function(){},
             EmptyClass(),
-            "hello\0",
-            {"key\0": "value"}
+            // Unexpected token ☺ in JSON at position 113
+            //"\x00\x01",
+            {"\x00\x01": "value"},
+            [function(){}, {"\x00\x01": "value"}]
         ];
 
         return createTestAll(execute, options, "only_fails");
@@ -75,112 +83,52 @@ class BasicTestCase extends ImpTestCase {
     function testSendWithHandlers() {
         local execute = function(value) {
             return Promise(function(resolve, reject) {
-                local mm = MessageManager();
                 local acked = false;
+                local mm = MessageManager({
+                    "firstMessageId":  msgId,
+                    "nextIdGenerator": msgIdGenerator
+                });
                 mm.onTimeout(function(msg, wait, fail) {
                     reject("onTimeout");
                 }.bindenv(this));
-
                 mm.onFail(function(msg, reason, retry) {
                     reject("onFail");
                 }.bindenv(this));
-
                 mm.onAck(function(msg) {
                     acked = true;
                 }.bindenv(this));
-
                 mm.onReply(function(msg, response) {
                     try {
                         assertTrue(acked, "Got reply before ack");
-                        assertEqual(BASIC_MESSAGE, response.data, ERR_REQ_RES_NOT_IDENTICAL);
+                        assertDeepEqualWrap(BASIC_MESSAGE, response.data, ERR_REQ_RES_NOT_IDENTICAL);
                         resolve();
                     } catch (ex) {
                         reject(ex);
                     }
                 }.bindenv(this));
-
-                local handlers = {
-                    "onTimeout": value,
-                    "onFail": value,
-                    "onAck": value,
-                    "onReply": value
-                };
-
                 try {
+                    local handlers = {
+                        "onTimeout": value,
+                        "onFail": value,
+                        "onAck": value,
+                        "onReply": value
+                    };
                     mm.send(MESSAGE_NAME, BASIC_MESSAGE, handlers);
                 } catch (ex) {
                     reject("Catch mm.send: " + ex);
                 }
             }.bindenv(this));
         }.bindenv(this);
-
-        local options = [
-            null, 
-            true, 
-            0, 
-            -1, 
-            1, 
-            13.37, 
-            "String", 
-            [1, 2], 
-            {"counter": "this"}, 
-            blob(64)
-        ];
-
-        return createTestAll(execute, options, "only_successes");
+        return createTestAll(execute, DEST_OPTIONS.ALL_TYPES_WO_FUNCTION, "only_successes");
     }
-
-    /* 
-    // Agent Runtime Error: ERROR: comparison between '1' and 'bool'
-    function testSendWithTimeout() {
-        local execute = function(value) {
-            return Promise(function(resolve, reject) {
-                local messageTimeout = MESSAGE_WITH_DELAY_SLEEP - 1;
-                local localMessageTimeout = function(){};
-                local mm = MessageManager({
-                    "messageTimeout": messageTimeout
-                });
-                local handlers = {
-                    "onReply": function(msg, response) {
-                        reject("onReply handler called");
-                    }.bindenv(this),
-                    "onFail": function(msg, reason, retry) {
-                        reject("onFail handler called. Reason: " + reason);
-                    }.bindenv(this),
-                    "onTimeout": function(msg, wait, fail) {
-                        try {
-                            assertEqual(MESSAGE_WITH_DELAY, msg.payload.name, "Wrong msg.payload.name: " + msg.payload.name);
-                            assertEqual(BASIC_MESSAGE, msg.payload.data, "Wrong msg.payload.data: " + msg.payload.data);
-                            resolve();
-                        } catch (ex) {
-                            reject(ex);
-                        }
-                        fail();
-                    }.bindenv(this)
-                };
-                mm.send(MESSAGE_WITH_DELAY, BASIC_MESSAGE, handlers, value);
-            }.bindenv(this));
-        }.bindenv(this);
-
-        local options = [
-            null, 
-            true, 
-            "String", 
-            [1, 2], 
-            {"counter": "this"}, 
-            blob(64), 
-            function(){}, 
-            EmptyClass()
-        ];
-
-        return createTestAll(execute, options, "only_successes");
-    }
-    */
 
     function testOn() {
         local execute = function(value) {
             return Promise(function(resolve, reject) {
-                local mm = MessageManager();
+                local mm = MessageManager({
+                    "firstMessageId":  msgId,
+                    "nextIdGenerator": msgIdGenerator
+                });
                 try {
                     mm.on(MESSAGE_DESTRUCTIVE_RESEND_RESPONSE, value);
                 } catch (ex) {
@@ -188,10 +136,7 @@ class BasicTestCase extends ImpTestCase {
                 }
                 mm.onReply(function(msg, response) {
                     try {
-                        assertDeepEqual("OK", response, ERR_REQ_RES_IDENTICAL + ". " +
-                                                        "Type: " + typeof response + ". " +
-                                                        "Expected: 'OK'. " +
-                                                        "Got: '" + response + "'.");
+                        assertDeepEqualWrap("OK", response, ERR_REQ_RES_IDENTICAL);
                         resolve();
                     } catch (ex) {
                         reject(ex);
@@ -200,38 +145,23 @@ class BasicTestCase extends ImpTestCase {
                 mm.send(MESSAGE_DESTRUCTIVE_RESEND, BASIC_MESSAGE);
             }.bindenv(this));
         }.bindenv(this);
-
-        local options = [
-            null, 
-            true, 
-            0, 
-            -1, 
-            1, 
-            13.37, 
-            "String", 
-            [1, 2], 
-            {"counter": "this"}, 
-            blob(64), 
-            EmptyClass()
-        ];
-
-        return createTestAll(execute, options, "only_successes");
+        return createTestAll(execute, DEST_OPTIONS.ALL_TYPES_WO_FUNCTION, "only_successes");
     }
 
     function testOnWithReturn() {
         local execute = function(value) {
             return Promise(function(resolve, reject) {
-                local mm = MessageManager();
+                local mm = MessageManager({
+                    "firstMessageId":  msgId,
+                    "nextIdGenerator": msgIdGenerator
+                });
                 mm.on(MESSAGE_DESTRUCTIVE_RESEND_RESPONSE, function(message, reply) {
                     reply("OK");
                     return value;
                 }.bindenv(this));
                 mm.onReply(function(msg, response) {
                     try {
-                        assertDeepEqual("OK", response, ERR_REQ_RES_IDENTICAL + ". " +
-                                                        "Type: " + typeof response + ". " +
-                                                        "Expected: 'OK'. " +
-                                                        "Got: '" + response + "'.");
+                        assertDeepEqualWrap("OK", response, ERR_REQ_RES_IDENTICAL);
                         resolve();
                     } catch (ex) {
                         reject(ex);
@@ -240,22 +170,6 @@ class BasicTestCase extends ImpTestCase {
                 mm.send(MESSAGE_DESTRUCTIVE_RESEND, BASIC_MESSAGE);
             }.bindenv(this));
         }.bindenv(this);
-
-        local options = [
-            null, 
-            true, 
-            0, 
-            -1, 
-            1, 
-            13.37, 
-            "String", 
-            [1, 2], 
-            {"counter": "this"}, 
-            blob(64), 
-            function(){},
-            EmptyClass()
-        ];
-
-        return createTestAll(execute, options, "only_successes");
+        return createTestAll(execute, DEST_OPTIONS.ALL_TYPES, "only_successes");
     }
 }

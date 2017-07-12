@@ -28,6 +28,7 @@ const MESSAGE_NAME = "test";
 const MESSAGE_WITHOUT_RESPONSE = "test_no_response";
 const MESSAGE_WITH_DELAY = "test_with_delay";
 const MESSAGE_WITH_HUGE_DELAY = "test_with_huge_delay";
+const MESSAGE_WITH_SMALL_DELAY = "test_with_small_delay";
 const MESSAGE_DESTRUCTIVE_RESEND = "test_destructive_resend";
 const MESSAGE_DESTRUCTIVE_RESEND_RESPONSE = "test_destructive_resend_response";
 
@@ -35,10 +36,23 @@ const REPLY_NO_MESSAGES = "No messages";
 const BASIC_MESSAGE = "basic message";
 
 const MESSAGE_WITH_DELAY_SLEEP = 2;
-const MESSAGE_WITH_DELAY_DEEP_SLEEP = 16;
+const MESSAGE_WITH_DELAY_DEEP_SLEEP = 8;
+const MESSAGE_WITH_DELAY_LIGHT_SLEEP = 1;
 
 const ERR_REQ_RES_NOT_IDENTICAL = "Request and response messages are not identical";
 const ERR_REQ_RES_IDENTICAL = "Request and response messages are identical";
+
+// These variables are used to correctly receive messages in the conditions of execution of the chain of tests.
+// Each test will contain these two parameters of MessageManager constructor.
+// MessageManager({
+//    "firstMessageId":  msgId,
+//    "nextIdGenerator": msgIdGenerator
+// })
+// This approach will be applied for all tests of this library.
+local msgId = 0;
+local msgIdGenerator = function() {
+    return ++msgId;
+}.bindenv(this);
 
 function isAgentSide() {
     return imp.environment() == ENVIRONMENT_AGENT;
@@ -48,7 +62,7 @@ function infoAboutSide() {
     info("Tests will be performed on the " + (isAgentSide() ? "agent" : "device") + "-side");
 }
 
-function assertDeepEqualWrap(expected, actial, message = null, compare = false) {
+function assertDeepEqualWrap(expected, actial, message = null, compare = true) {
     if (compare) {
         local compareString = "Type: " + typeof actial + ". " +
                               "Expected: '" + expected + "'. " +
@@ -59,5 +73,9 @@ function assertDeepEqualWrap(expected, actial, message = null, compare = false) 
             message = message + ". " + compareString;
         }
     }
-    assertDeepEqual(expected, actial, message);
+    if (typeof actial == "blob") {
+        assertDeepEqual(expected.tostring(), actial.tostring(), message);
+    } else {
+        assertDeepEqual(expected, actial, message);
+    }
 }

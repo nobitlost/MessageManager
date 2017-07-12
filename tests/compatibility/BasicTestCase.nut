@@ -24,8 +24,7 @@
 // "Promise" symbol is injected dependency from ImpUnit_Promise module,
 // while class being tested can be accessed from global scope as "::Promise".
 
-//@include "github:electricimp/MessageManager/MessageManager.lib.nut"
-@include __PATH__+"/../MessageManager.lib.nut"
+@include "github:electricimp/MessageManager/MessageManager.lib.nut"
 @include __PATH__+"/../ConnectionManager.nut"
 @include __PATH__+"/../Base.nut"
 
@@ -39,35 +38,34 @@ class BasicTestCase extends ImpTestCase {
 
     function testSend() {
         return Promise(function(resolve, reject) {
-
-            local mm = MessageManager();
-
+            local mm = MessageManager({
+                "firstMessageId":  msgId,
+                "nextIdGenerator": msgIdGenerator
+            });
             mm.onReply(function(msg, response) {
                 try {
-                    assertEqual(BASIC_MESSAGE, response.data, ERR_REQ_RES_NOT_IDENTICAL);
+                    assertDeepEqualWrap(BASIC_MESSAGE, response.data, ERR_REQ_RES_NOT_IDENTICAL);
                     resolve();
                 } catch (ex) {
                     reject(ex);
                 }
             }.bindenv(this));
-
             mm.onFail(function(msg, reason, retry) {
                 reject("onFail handler called. Reason: " + reason);
             });
-
             mm.onTimeout(function(msg, wait, fail) {
                 fail();
             });
-
             mm.send(MESSAGE_NAME, BASIC_MESSAGE);
-
         }.bindenv(this));
     }
 
     function testSendExtended() {
         return Promise(function(resolve, reject) {
-
-            local mm = MessageManager();
+            local mm = MessageManager({
+                "firstMessageId":  msgId,
+                "nextIdGenerator": msgIdGenerator
+            });
             local messages = [null, true, 0, 1, -1, 0.0, 4.2, blob(8), "some string", ["first", "second"], {"key": "value"}];
             local failed = false;
             local done = function(){
@@ -84,60 +82,40 @@ class BasicTestCase extends ImpTestCase {
                     return;
                 }
                 local message = messages[index];
-
                 mm.onReply(function(msg, response) {
                     try {
-                        if (typeof response.data == "blob") {
-                            assertDeepEqual(
-                                message.tostring(), 
-                                response.data.tostring(), 
-                                ERR_REQ_RES_NOT_IDENTICAL + ". Type: " + typeof response.data
-                            );
-                        } else {
-                            assertDeepEqual(
-                                message, 
-                                response.data, 
-                                ERR_REQ_RES_NOT_IDENTICAL + ". " +
-                                    "Type: " + typeof response.data + ". " +
-                                    "Expected: '" + message + "'. " +
-                                    "Got: '" + response.data + "'."
-                            );
-                        }
+                        assertDeepEqualWrap(message, response.data, ERR_REQ_RES_NOT_IDENTICAL);
                     } catch (ex) {
                         info(ex);
                         failed = true;
                     }
                     next(++index);
                 }.bindenv(this));
-
                 mm.onFail(function(msg, reason, retry) {
                     info("onFail handler called. Reason: " + reason);
                     failed = true;
                 }.bindenv(this));
-
                 mm.onTimeout(function(msg, wait, fail) {
                     fail();
                 });
-
                 mm.send(MESSAGE_NAME, message);
             };
-
             next(0);
-
         }.bindenv(this));
     }
 
     function testSendWithHandlers() {
         return Promise(function(resolve, reject) {
-
-            local mm = MessageManager();
+            local mm = MessageManager({
+                "firstMessageId":  msgId,
+                "nextIdGenerator": msgIdGenerator
+            });
             local results = {
                 "onAck": false,
                 "onTimeout": false,
                 "onFail": false,
                 "onReply": false
             };
-
             mm.onAck(function(msg) {
                 if (!results["onAck"]) {
                     reject("global onAck handler called before handlers.onAck");
@@ -158,7 +136,6 @@ class BasicTestCase extends ImpTestCase {
                     reject("global onReply handler called before handlers.onReply");
                 }
             }.bindenv(this));
-
             local handlers = {
                 "onAck": function(msg) {
                     if (!results["onAck"]) {
@@ -180,7 +157,7 @@ class BasicTestCase extends ImpTestCase {
                     if (!results["onReply"]) {
                         results["onReply"] = true;
                         try {
-                            assertEqual(BASIC_MESSAGE, response.data, ERR_REQ_RES_NOT_IDENTICAL);
+                            assertDeepEqualWrap(BASIC_MESSAGE, response.data, ERR_REQ_RES_NOT_IDENTICAL);
                             resolve();
                         } catch (ex) {
                             reject(ex);
@@ -188,21 +165,19 @@ class BasicTestCase extends ImpTestCase {
                     }
                 }.bindenv(this)
             };
-
             mm.send(MESSAGE_NAME, BASIC_MESSAGE, handlers);
-
         }.bindenv(this));
     }
 
     function testSendWithTimeout() {
         return Promise(function(resolve, reject) {
-
             local messageTimeout = MESSAGE_WITH_DELAY_SLEEP + 2;
             local localMessageTimeout = MESSAGE_WITH_DELAY_SLEEP - 1;
             local mm = MessageManager({
-                "messageTimeout": messageTimeout
+                "firstMessageId":  msgId,
+                "nextIdGenerator": msgIdGenerator,
+                "messageTimeout":  messageTimeout
             });
-
             local handlers = {
                 "onReply": function(msg, response) {
                     reject("onReply handler called");
@@ -212,8 +187,8 @@ class BasicTestCase extends ImpTestCase {
                 }.bindenv(this),
                 "onTimeout": function(msg, wait, fail) {
                     try {
-                        assertEqual(MESSAGE_WITH_DELAY, msg.payload.name, "Wrong msg.payload.name: " + msg.payload.name);
-                        assertEqual(BASIC_MESSAGE, msg.payload.data, "Wrong msg.payload.data: " + msg.payload.data);
+                        assertDeepEqualWrap(MESSAGE_WITH_DELAY, msg.payload.name, "Wrong msg.payload.name");
+                        assertDeepEqualWrap(BASIC_MESSAGE, msg.payload.data, "Wrong msg.payload.data");
                         resolve();
                     } catch (ex) {
                         reject(ex);
@@ -221,16 +196,16 @@ class BasicTestCase extends ImpTestCase {
                     fail();
                 }.bindenv(this)
             };
-            
             mm.send(MESSAGE_WITH_DELAY, BASIC_MESSAGE, handlers, localMessageTimeout);
-
         }.bindenv(this));
     }
 
     function testSendWithMetadata() {
         return Promise(function(resolve, reject) {
-
-            local mm = MessageManager();
+            local mm = MessageManager({
+                "firstMessageId":  msgId,
+                "nextIdGenerator": msgIdGenerator
+            });
             local metadata = {
                 "first": 1,
                 "second": 2
@@ -238,7 +213,7 @@ class BasicTestCase extends ImpTestCase {
             local handlers = {
                 "onReply": function(msg, response) {
                     try {
-                        assertEqual(metadata, msg.metadata, "Wrong msg.metadata: " + msg.metadata + ", must be: " + metadata);
+                        assertDeepEqualWrap(metadata, msg.metadata, "Wrong msg.metadata");
                         resolve();
                     } catch (ex) {
                         reject(ex);
@@ -251,9 +226,7 @@ class BasicTestCase extends ImpTestCase {
                     fail();
                 }.bindenv(this)
             };
-            
             mm.send(MESSAGE_NAME, BASIC_MESSAGE, handlers, null, metadata);
-
         }.bindenv(this));
     }
 }

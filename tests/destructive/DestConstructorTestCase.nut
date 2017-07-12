@@ -25,54 +25,44 @@
 // while class being tested can be accessed from global scope as "::Promise".
 
 @include "github:electricimp/MessageManager/MessageManager.lib.nut"
-@include __PATH__+"/ConnectionManager.nut"
-@include __PATH__+"/Base.nut"
+@include __PATH__+"/../ConnectionManager.nut"
+@include __PATH__+"/../Base.nut"
+@include __PATH__+"/BaseDestructive.nut"
 
-// EchoServer
-// This file should be included into agent or device code file, depending on witch one will be echo server (will respond with received message)
+// DestConstructorTestCase
+// Destructive tests for MessageManager.DataMessage constructor
+class DestConstructorTestCase extends ImpTestCase {
 
-local cm = getConnectionManager();
-
-local onPartnerConnected = function(reply) {
-    isAgentSide() && cm.connect();
-    reply(REPLY_NO_MESSAGES);
-};
-
-local mm = MessageManager({
-    "connectionManager":  cm,
-    "onPartnerConnected": onPartnerConnected.bindenv(this)
-});
-
-mm.on(MESSAGE_NAME, function(message, reply) {
-    reply(message);
-}.bindenv(this));
-
-mm.on(MESSAGE_WITHOUT_RESPONSE, function(message, reply) {
-    // do nothing
-}.bindenv(this));
-
-mm.on(MESSAGE_WITH_DELAY, function(message, reply) {
-    imp.sleep(MESSAGE_WITH_DELAY_SLEEP);
-    reply(message);
-}.bindenv(this));
-
-mm.on(MESSAGE_WITH_HUGE_DELAY, function(message, reply) {
-    imp.sleep(MESSAGE_WITH_DELAY_DEEP_SLEEP);
-    reply(message);
-}.bindenv(this));
-
-mm.on(MESSAGE_WITH_SMALL_DELAY, function(message, reply) {
-    imp.sleep(MESSAGE_WITH_DELAY_LIGHT_SLEEP);
-    reply(message);
-}.bindenv(this));
-
-mm.on(MESSAGE_DESTRUCTIVE_RESEND, function(message, reply) {
-    try {
-        mm.onAck(function(msg) {
-            reply("OK");
-        }.bindenv(this));
-        mm.send(MESSAGE_DESTRUCTIVE_RESEND_RESPONSE, message);
-    } catch (ex) {
-        reply(ex);
+    function setUp() {
+        infoAboutSide();
     }
-}.bindenv(this));
+
+    function testDMConstructor() {
+        return Promise(function(resolve, reject) {
+            try {
+                local mm = MessageManager({
+                    "firstMessageId":  msgId,
+                    "nextIdGenerator": msgIdGenerator
+                });
+                local dm = MessageManager.DataMessage(0, "", "", "", 0);
+                mm.onReply(function(msg, response) {
+                    try {
+                        assertDeepEqualWrap(BASIC_MESSAGE, response.data, ERR_REQ_RES_NOT_IDENTICAL);
+                        resolve();
+                    } catch (ex) {
+                        reject(ex);
+                    }
+                }.bindenv(this));
+                mm.onFail(function(msg, reason, retry) {
+                    reject("onFail handler called. Reason: " + reason);
+                });
+                mm.onTimeout(function(msg, wait, fail) {
+                    fail();
+                });
+                mm.send(MESSAGE_NAME, BASIC_MESSAGE);
+            } catch (ex) {
+                reject("Catch: " + ex);
+            }
+        }.bindenv(this));
+    }
+}

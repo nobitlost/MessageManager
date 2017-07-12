@@ -3,12 +3,8 @@
     "devices": [
         "233f4aafaf952dee" /* G */
     ],
-    "agentFile": "tests/agent.nut",
-    "deviceFile": "MessageManager.lib.nut",
+    "agentFile": false,
+    "deviceFile": false,
     "stopOnFailure": false,
-    "timeout": 30,
-    "tests": [
-        "*.test.nut",
-        "tests/**/*.test.nut"
-    ]
+    "timeout": 60
 }

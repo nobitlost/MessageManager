@@ -32,9 +32,8 @@
 // @param {string} type - The condition for the success of all tests (only_successes|only_fails)
 // @param {boolean} log - Display each test results
 // @return {Promise}
-function createTestAll(execute, options, type = "only_successes", log = true) {
+function createTestAll(execute, options, type = "only_successes", log = false) {
     return Promise(function(resolve, reject) {
-
         local length = options.len();
         local index = 0;
         local successes = 0;
@@ -91,10 +90,58 @@ function createTestAll(execute, options, type = "only_successes", log = true) {
             }
         }.bindenv(this);
         next();
-
     }.bindenv(this));
 }
 
 class EmptyClass {
     constructor(){}
+}
+
+class DEST_OPTIONS {
+    static ALL_TYPES = [
+        null, 
+        true, 
+        0, 
+        -1, 
+        1, 
+        13.37, 
+        "String", 
+        [1, 2], 
+        {"counter": "this"}, 
+        blob(64), 
+        function(){},
+        EmptyClass()
+    ];
+    static ALL_TYPES_WO_FUNCTION = [
+        null, 
+        true, 
+        0, 
+        -1, 
+        1, 
+        13.37, 
+        "String", 
+        [1, 2], 
+        {"counter": "this"}, 
+        blob(64)
+    ];
+    static WO_CONCATENATION = [
+        true, 
+        [1, 2], 
+        {"counter": "this"}, 
+        blob(64), 
+        function(){},
+        EmptyClass()
+    ];
+    static SPECIAL_FOR_DROP = [
+        [null, null],
+        [null, true],
+        [0, 0],
+        [false, 13.37],
+        [null, "String"],
+        [null, [1, 2]],
+        [null, {"counter": "this"}],
+        [null, blob(64)],
+        [null, function(){}],
+        [null, EmptyClass()]
+    ];
 }

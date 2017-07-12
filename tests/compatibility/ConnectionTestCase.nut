@@ -28,60 +28,44 @@
 @include __PATH__+"/../ConnectionManager.nut"
 @include __PATH__+"/../Base.nut"
 
-// PendingCountTestCase
-// Tests for MessageManager.getPendingCount()
-class PendingCountTestCase extends ImpTestCase {
+// ConnectionTestCase
+// Tests for MessageManager constructor options (onPartnerConnected, onConnectedReply, connectionManager)
+// Test connection with dummy ConnectionManager
+class ConnectionTestCase extends ImpTestCase {
 
     function setUp() {
         infoAboutSide();
     }
     
-    function testConsistently() {
+    function testConnection() {
         return Promise(function(resolve, reject) {
+            local partnerConnected = false;
+            local connectedReply = null;
+            local cm = getConnectionManager(true);
+            local onPartnerConnected = function(reply) {
+                isAgentSide() && cm.connect();
+                reply(REPLY_NO_MESSAGES);
+                partnerConnected = true;
+            }.bindenv(this);
+            local onConnectedReply = function(data) {
+                connectedReply = data;
+            }.bindenv(this);
             local mm = MessageManager({
-                "firstMessageId":  msgId,
-                "nextIdGenerator": msgIdGenerator
+                "firstMessageId":     msgId,
+                "nextIdGenerator":    msgIdGenerator,
+                "connectionManager":  cm,
+                "onPartnerConnected": onPartnerConnected.bindenv(this),
+                "onConnectedReply":   onConnectedReply.bindenv(this)
             });
-            local limit = 10;
-            local index = 0;
-            local next;
-            next = function() {
+            imp.wakeup(2, function() {
                 try {
-                    if (++index >= limit) {
-                        resolve();
-                        return;
-                    }
-                    mm.onReply(function(msg, response) {
-                        imp.wakeup(0.01, next.bindenv(this));
-                    }.bindenv(this));
-                    mm.send(MESSAGE_NAME, BASIC_MESSAGE);
-                    local pendingCount = mm.getPendingCount();
-                    assertDeepEqualWrap(1, pendingCount, "Wrong MessageManager.getPendingCount() value");
+                    assertTrue(partnerConnected, "Partner is not connected");
+                    assertDeepEqualWrap(REPLY_NO_MESSAGES, connectedReply, "Wrong connected reply");
+                    resolve();
                 } catch (ex) {
                     reject(ex);
                 }
-            };
-            next();
+            }.bindenv(this));
         }.bindenv(this));
-    }
-
-    function testSimultaneously() {
-        return Promise(function(resolve, reject) {
-            local mm = MessageManager({
-                "firstMessageId":  msgId,
-                "nextIdGenerator": msgIdGenerator
-            });
-            local limit = 5;
-            for (local i = 0; i < limit; i++) {
-                mm.send(MESSAGE_NAME, BASIC_MESSAGE);
-            }
-            try {
-                local pendingCount = mm.getPendingCount();
-                assertDeepEqualWrap(limit, pendingCount, "Wrong MessageManager.getPendingCount() value");
-                resolve();
-            } catch (ex) {
-                reject(ex);
-            }
-        }.bindenv(this))
     }
 }

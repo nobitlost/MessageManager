@@ -24,8 +24,7 @@
 // "Promise" symbol is injected dependency from ImpUnit_Promise module,
 // while class being tested can be accessed from global scope as "::Promise".
 
-//@include "github:electricimp/MessageManager/MessageManager.lib.nut"
-@include __PATH__+"/../MessageManager.lib.nut"
+@include "github:electricimp/MessageManager/MessageManager.lib.nut"
 @include __PATH__+"/../ConnectionManager.nut"
 @include __PATH__+"/../Base.nut"
 
@@ -64,18 +63,18 @@ class OverflowTestCase extends ImpTestCase {
                 local summ = fail + timeout + (ack + reply + replyFailed) / 2;
                 if (summ >= total) {
                     try {
-                        assertEqual(0, fail, "fail");
-                        assertEqual(0, timeout, "timeout");
-                        assertEqual(0, replyFailed, "replyFailed");
-                        assertEqual(total, ack, "ack != total");
-                        assertEqual(total, reply + replyFailed, "reply != total");
-                        assertEqual(total, summ, "summ != total");
-                        assertEqual(fail, local_fail, "fail != local_fail");
-                        assertEqual(timeout, local_timeout, "timeout != local_timeout");
-                        assertEqual(ack, local_ack, "ack != local_ack");
-                        assertEqual(reply, local_reply, "reply != local_reply");
-                        assertEqual(total, beforeSend, "beforeSend != total");
-                        assertEqual(0, beforeRetry, "beforeRetry");
+                        assertDeepEqualWrap(0, fail, "fail");
+                        assertDeepEqualWrap(0, timeout, "timeout");
+                        assertDeepEqualWrap(0, replyFailed, "replyFailed");
+                        assertDeepEqualWrap(total, ack, "ack != total");
+                        assertDeepEqualWrap(total, reply + replyFailed, "reply != total");
+                        assertDeepEqualWrap(total, summ, "summ != total");
+                        assertDeepEqualWrap(fail, local_fail, "fail != local_fail");
+                        assertDeepEqualWrap(timeout, local_timeout, "timeout != local_timeout");
+                        assertDeepEqualWrap(ack, local_ack, "ack != local_ack");
+                        assertDeepEqualWrap(reply, local_reply, "reply != local_reply");
+                        assertDeepEqualWrap(total, beforeSend, "beforeSend != total");
+                        assertDeepEqualWrap(0, beforeRetry, "beforeRetry");
                         info("Sent and received: " + total + " message(s). Time: " + (time() - ts) + " second(s)");
                         resolve();
                     } catch (ex) {
@@ -97,6 +96,8 @@ class OverflowTestCase extends ImpTestCase {
             }.bindenv(this);
 
             local mm = MessageManager({
+                "firstMessageId":  msgId,
+                "nextIdGenerator": msgIdGenerator,
                 "maxMessageRate": max_rate
             });
 
@@ -117,7 +118,7 @@ class OverflowTestCase extends ImpTestCase {
             
             mm.onReply(function(msg, response) {
                 try {
-                    assertEqual(BASIC_MESSAGE, response.data, ERR_REQ_RES_NOT_IDENTICAL);
+                    assertDeepEqualWrap(BASIC_MESSAGE, response.data, ERR_REQ_RES_NOT_IDENTICAL);
                     reply++;
                 } catch (ex) {
                     replyFailed++;
@@ -150,7 +151,7 @@ class OverflowTestCase extends ImpTestCase {
                 }.bindenv(this),
                 "onReply": function(msg, response) {
                     try {
-                        assertEqual(BASIC_MESSAGE, response.data, ERR_REQ_RES_NOT_IDENTICAL);
+                        assertDeepEqualWrap(BASIC_MESSAGE, response.data, ERR_REQ_RES_NOT_IDENTICAL);
                         local_reply++;
                     } catch (ex) {
                         local_replyFailed++;
@@ -177,6 +178,12 @@ class OverflowTestCase extends ImpTestCase {
     }
     
     function testDisconnectedDoesntSendMessages() {
+        if (isAgentSide()) {
+            info("ConnectionManager is a device-side only library, so we skip this test that running on the agent");
+            return Promise(function(resolve, reject) {
+                resolve();
+            });
+        }
         local TOTAL_OFFLINE_MESSAGE_COUNT = 10;
         return Promise(function(resolve, reject) {
             local _numOfAcks = 0;
@@ -233,7 +240,6 @@ class OverflowTestCase extends ImpTestCase {
             }
 
             local _handlers = {};
-            local _nextId = 0;
             _handlers[MM_HANDLER_NAME_ON_ACK]     <- localOnAck.bindenv(this);
             _handlers[MM_HANDLER_NAME_ON_FAIL]    <- localOnFail.bindenv(this);
             _handlers[MM_HANDLER_NAME_ON_REPLY]   <- localOnReply.bindenv(this);
@@ -241,12 +247,10 @@ class OverflowTestCase extends ImpTestCase {
 
             local cm = getConnectionManager();
             local mm = MessageManager({
+                "firstMessageId":    msgId,
+                "nextIdGenerator":   msgIdGenerator,
                 "messageTimeout":    10,
-                "connectionManager": cm,
-                "nextIdGenerator":   function() {
-                    _nextId = (_nextId + 1) % RAND_MAX;
-                    return _nextId;
-                }.bindenv(this)
+                "connectionManager": cm
             });
             mm.onAck(gOnAck.bindenv(this));
             mm.onFail(gOnFail.bindenv(this));
@@ -266,37 +270,36 @@ class OverflowTestCase extends ImpTestCase {
             imp.wakeup(2, function() {
                 local pending = mm.getPendingCount();
                 try {
-                    assertEqual(0, _numOfAcks, "acks");
-                    assertEqual(0, _numOfReplies, "replies");
-                    assertEqual(0, _numOfTimeouts, "timeouts");
-                    assertEqual(0, _numOfBeforeRetries, "beforeRetries");
-                    assertEqual(TOTAL_OFFLINE_MESSAGE_COUNT, _numOfFails, "fails");
-                    assertEqual(TOTAL_OFFLINE_MESSAGE_COUNT, _numOfBeforeSends, "beforeSends");
-                    assertEqual(TOTAL_OFFLINE_MESSAGE_COUNT, pending, "pending");
+                    assertDeepEqualWrap(0, _numOfAcks, "acks");
+                    assertDeepEqualWrap(0, _numOfReplies, "replies");
+                    assertDeepEqualWrap(0, _numOfTimeouts, "timeouts");
+                    assertDeepEqualWrap(0, _numOfBeforeRetries, "beforeRetries");
+                    assertDeepEqualWrap(TOTAL_OFFLINE_MESSAGE_COUNT, _numOfFails, "fails");
+                    assertDeepEqualWrap(TOTAL_OFFLINE_MESSAGE_COUNT, _numOfBeforeSends, "beforeSends");
+                    assertDeepEqualWrap(TOTAL_OFFLINE_MESSAGE_COUNT, pending, "pending");
 
                     // If both handlers are defined, the number of acks should be equal to the number of replies
-                    assertEqual(_numOfReplies, _numOfAcks, "acks == replies");
+                    assertDeepEqualWrap(_numOfReplies, _numOfAcks, "acks == replies");
 
                     // No local handlers to be called
-                    assertEqual(0, _numOfLocalAcks, "localAcks");
-                    assertEqual(0, _numOfLocalFails, "localFails");
-                    assertEqual(0, _numOfLocalReplies, "localReplies");
-                    assertEqual(0, _numOfLocalTimeouts, "localTimeouts");
+                    assertDeepEqualWrap(0, _numOfLocalAcks, "localAcks");
+                    assertDeepEqualWrap(0, _numOfLocalFails, "localFails");
+                    assertDeepEqualWrap(0, _numOfLocalReplies, "localReplies");
+                    assertDeepEqualWrap(0, _numOfLocalTimeouts, "localTimeouts");
 
                     resolve();
                 } catch (ex) {
-                    local message = "fails " + _numOfFails + " | " + 
-                                    "timeouts " + _numOfTimeouts + " | " + 
-                                    "acks " + _numOfAcks + " | " + 
-                                    "replies " + _numOfReplies + " | " + 
-                                    "beforeRetries " + _numOfBeforeRetries + " | " + 
-                                    "beforeSends " + _numOfBeforeSends + " | " + 
-                                    "pending " + pending + " | " + 
-                                    "l_fails " + _numOfLocalFails + " | " + 
-                                    "l_timeouts " + _numOfLocalTimeouts + " | " + 
-                                    "l_acks " + _numOfLocalAcks + " | " + 
-                                    "l_replies " + _numOfLocalReplies;
-                    info(message);
+                    info("fails " + _numOfFails + " | " + 
+                         "timeouts " + _numOfTimeouts + " | " + 
+                         "acks " + _numOfAcks + " | " + 
+                         "replies " + _numOfReplies);
+                    info("l_fails " + _numOfLocalFails + " | " + 
+                         "l_timeouts " + _numOfLocalTimeouts + " | " + 
+                         "l_acks " + _numOfLocalAcks + " | " + 
+                         "l_replies " + _numOfLocalReplies);
+                    info("beforeRetries " + _numOfBeforeRetries + " | " + 
+                         "beforeSends " + _numOfBeforeSends + " | " + 
+                         "pending " + pending);
                     reject(ex);
                 }
             }.bindenv(this));
@@ -327,6 +330,8 @@ class OverflowTestCase extends ImpTestCase {
             }
 
             _mm = MessageManager({
+                "firstMessageId":  msgId,
+                "nextIdGenerator": msgIdGenerator,
                 "maxMessageRate" : MAX_RATE_LIMIT,
                 "retryInterval"  : RETRY_INTERVAL_SEC
             });
@@ -341,8 +346,8 @@ class OverflowTestCase extends ImpTestCase {
 
             imp.wakeup(3, function() {
                 try {
-                    assertEqual(TOTAL_MESSAGES_SENT - MAX_RATE_LIMIT, _numOfFailures, "Number of rate limits: " + _numOfFailures);
-                    assertEqual(MAX_RATE_LIMIT, _numOfAcks, "Number of ACKs: " + _numOfAcks);
+                    assertDeepEqualWrap(TOTAL_MESSAGES_SENT - MAX_RATE_LIMIT, _numOfFailures, "Number of rate limits");
+                    assertDeepEqualWrap(MAX_RATE_LIMIT, _numOfAcks, "Number of ACKs");
                     resolve();
                 } catch (ex) {
                     reject(ex);

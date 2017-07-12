@@ -24,8 +24,7 @@
 // "Promise" symbol is injected dependency from ImpUnit_Promise module,
 // while class being tested can be accessed from global scope as "::Promise".
 
-//@include "github:electricimp/MessageManager/MessageManager.lib.nut"
-@include __PATH__+"/../MessageManager.lib.nut"
+@include "github:electricimp/MessageManager/MessageManager.lib.nut"
 @include __PATH__+"/../ConnectionManager.nut"
 @include __PATH__+"/../Base.nut"
 
@@ -39,70 +38,65 @@ class BeforeTestCase extends ImpTestCase {
     
     function testBeforeSendEnqueue() {
         return Promise(function(resolve, reject) {
-
             local postpone = true;
-            local mm = MessageManager();
-
+            local mm = MessageManager({
+                "firstMessageId":  msgId,
+                "nextIdGenerator": msgIdGenerator
+            });
             mm.beforeSend(function(msg, enqueue, drop) {
                 if (postpone) {
                     postpone = false;
                     enqueue();
                 }
             }.bindenv(this));
-
             mm.onReply(function(msg, response) {
                 try {
-                    assertEqual(BASIC_MESSAGE, response.data, ERR_REQ_RES_NOT_IDENTICAL);
+                    assertDeepEqualWrap(BASIC_MESSAGE, response.data, ERR_REQ_RES_NOT_IDENTICAL);
                     resolve();
                 } catch (ex) {
                     reject(ex);
                 }
             }.bindenv(this));
-
             mm.onFail(function(msg, reason, retry) {
                 reject("onFail handler called. Reason: " + reason);
             }.bindenv(this));
-
             mm.onTimeout(function(msg, wait, fail) {
                 fail();
             }.bindenv(this));
-
             mm.send(MESSAGE_NAME, BASIC_MESSAGE);
-            
         }.bindenv(this));
     }
 
     function testBeforeSendDrop() {
         return Promise(function(resolve, reject) {
-
             local counter = 0;
             local err = "Some kind of error";
-            local mm = MessageManager();
+            local mm = MessageManager({
+                "firstMessageId":  msgId,
+                "nextIdGenerator": msgIdGenerator
+            });
             local send = function() {
                 mm.send(MESSAGE_NAME, BASIC_MESSAGE);
             };
-
             mm.beforeSend(function(msg, enqueue, drop) {
                 counter++;
                 if (counter == 1) {
                     drop(false, err);
                 }
             }.bindenv(this));
-
             mm.onReply(function(msg, response) {
                 try {
-                    assertEqual(BASIC_MESSAGE, response.data, ERR_REQ_RES_NOT_IDENTICAL);
+                    assertDeepEqualWrap(BASIC_MESSAGE, response.data, ERR_REQ_RES_NOT_IDENTICAL);
                     assertGreater(counter, 1, "First message should have been dropped");
                     resolve();
                 } catch (ex) {
                     reject(ex);
                 }
             }.bindenv(this));
-
             mm.onFail(function(msg, reason, retry) {
                 if (counter == 1) {
                     try {
-                        assertEqual(err, reason, "Wrong reason provided: " + reason);
+                        assertDeepEqualWrap(err, reason, "Wrong reason provided");
                         send();
                     } catch (ex) {
                         reject(ex);
@@ -111,31 +105,27 @@ class BeforeTestCase extends ImpTestCase {
                     reject("onFail handler called. Reason: " + reason);
                 }
             }.bindenv(this));
-
             mm.onTimeout(function(msg, wait, fail) {
                 fail();
             }.bindenv(this));
-
             send();
-            
         }.bindenv(this));
     }
 
     function testBeforeRetrySkip() {
         return Promise(function(resolve, reject) {
-
             local ts = 0;
             local retryInterval = 2;
             local retryShift = 0;
             local attempt = 0;
             local mm = MessageManager({
-                "retryInterval": retryInterval
+                "firstMessageId":  msgId,
+                "nextIdGenerator": msgIdGenerator,
+                "retryInterval":   retryInterval
             });
-
             mm.beforeSend(function(msg, enqueue, drop) {
                 enqueue();
             }.bindenv(this));
-
             mm.beforeRetry(function(msg, skip, drop) {
                 try {
                     attempt++;
@@ -145,17 +135,17 @@ class BeforeTestCase extends ImpTestCase {
                     local shift = time() - ts;
                     switch (attempt) {
                         case 1: 
-                            assertEqual(retryShift, shift, "Wrong retry interval: " + shift + ", must be: " + retryShift);
+                            assertDeepEqualWrap(retryShift, shift, "Wrong retry interval");
                             retryShift += retryInterval;
                             skip(); 
                             break;
                         case 2:
-                            assertEqual(retryShift, shift, "Wrong retry interval: " + shift + ", must be: " + retryShift);
+                            assertDeepEqualWrap(retryShift, shift, "Wrong retry interval");
                             retryShift += retryInterval + 2;
                             skip(retryInterval + 2);
                             break;
                         case 3:
-                            assertEqual(retryShift, shift, "Wrong retry interval: " + shift + ", must be: " + retryShift);
+                            assertDeepEqualWrap(retryShift, shift, "Wrong retry interval");
                             drop();
                             resolve();
                             break;
@@ -164,37 +154,32 @@ class BeforeTestCase extends ImpTestCase {
                     reject(ex);
                 }
             }.bindenv(this));
-
             mm.onFail(function(msg, reason, retry) {
                 reject("onFail handler called. Reason: " + reason);
             }.bindenv(this));
-
             mm.onTimeout(function(msg, wait, fail) {
                 fail();
             }.bindenv(this));
-
             mm.onReply(function(msg, response) {
                 reject("onReply handler called");
             }.bindenv(this));
-
             mm.send(MESSAGE_NAME, BASIC_MESSAGE);
-
         }.bindenv(this));
     }
 
     function testBeforeRetryDrop() {
         return Promise(function(resolve, reject) {
-
             local message = 0;
-            local mm = MessageManager();
+            local mm = MessageManager({
+                "firstMessageId":  msgId,
+                "nextIdGenerator": msgIdGenerator
+            });
             local send = function() {
                 mm.send(MESSAGE_NAME, BASIC_MESSAGE);
             };
-
             mm.beforeSend(function(msg, enqueue, drop) {
                 enqueue();
             }.bindenv(this));
-
             mm.beforeRetry(function(msg, skip, drop) {
                 try {
                     message++;
@@ -211,7 +196,6 @@ class BeforeTestCase extends ImpTestCase {
                     reject(ex);
                 }
             }.bindenv(this));
-
             mm.onFail(function(msg, reason, retry) {
                 if (message == 2) {
                     resolve();
@@ -219,17 +203,13 @@ class BeforeTestCase extends ImpTestCase {
                     reject("onFail handler called. Reason: " + reason);
                 }
             }.bindenv(this));
-
             mm.onTimeout(function(msg, wait, fail) {
                 fail();
             }.bindenv(this));
-
             mm.onReply(function(msg, response) {
                 reject("onReply handler called");
             }.bindenv(this));
-
             send();
-
         }.bindenv(this));
     }
 }
