@@ -62,20 +62,20 @@ function infoAboutSide() {
     info("Tests will be performed on the " + (isAgentSide() ? "agent" : "device") + "-side");
 }
 
-function assertDeepEqualWrap(expected, actial, message = null, compare = true) {
+function assertDeepEqualWrap(expected, actual, message = null, compare = true) {
     if (compare) {
-        local compareString = "Type: " + typeof actial + ". " +
+        local compareString = "Type: " + typeof actual + ". " +
                               "Expected: '" + expected + "'. " +
-                              "Got: '" + actial + "'.";
+                              "Got: '" + actual + "'.";
         if (message == null) {
             message = compareString;
         } else {
             message = message + ". " + compareString;
         }
     }
-    if (typeof actial == "blob") {
-        assertDeepEqual(expected.tostring(), actial.tostring(), message);
+    if (typeof actual == "blob") {
+        assertDeepEqual(expected.tostring(), actual.tostring(), message);
     } else {
-        assertDeepEqual(expected, actial, message);
+        assertDeepEqual(expected, actual, message);
     }
 }
