@@ -25,7 +25,6 @@
 // while class being tested can be accessed from global scope as "::Promise".
 
 @include "github:electricimp/MessageManager/MessageManager.lib.nut"
-@include __PATH__+"/../ConnectionManager.nut"
 @include __PATH__+"/../Base.nut"
 
 // LocalCallbacksTestCase
@@ -102,12 +101,12 @@ class LocalCallbacksTestCase extends ImpTestCase {
             mm.onReply(function(msg, response) {
                 !results["onReply"] && reject("global onReply handler called before handlers.onReply");
             }.bindenv(this));
-            local dm = mm.send(MESSAGE_WITH_HUGE_DELAY, BASIC_MESSAGE);
+            local dm = mm.send(MESSAGE_WITH_LONG_DELAY, BASIC_MESSAGE);
             dm.onTimeout(function(msg, wait, fail) {
                 if (!results["onTimeout"]) results["onTimeout"] = true;
                 try {
                     counter++;
-                    assertDeepEqualWrap(MESSAGE_WITH_HUGE_DELAY, msg.payload.name, "Wrong msg.payload.name");
+                    assertDeepEqualWrap(MESSAGE_WITH_LONG_DELAY, msg.payload.name, "Wrong msg.payload.name");
                     assertDeepEqualWrap(BASIC_MESSAGE, msg.payload.data, "Wrong msg.payload.data");
                     if (ts == 0) {
                         ts = time();

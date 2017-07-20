@@ -25,7 +25,6 @@
 // while class being tested can be accessed from global scope as "::Promise".
 
 @include "github:electricimp/MessageManager/MessageManager.lib.nut"
-@include __PATH__+"/ConnectionManager.nut"
 @include __PATH__+"/Base.nut"
 
 // EchoServer
@@ -56,13 +55,13 @@ mm.on(MESSAGE_WITH_DELAY, function(message, reply) {
     reply(message);
 }.bindenv(this));
 
-mm.on(MESSAGE_WITH_HUGE_DELAY, function(message, reply) {
-    imp.sleep(MESSAGE_WITH_DELAY_DEEP_SLEEP);
+mm.on(MESSAGE_WITH_LONG_DELAY, function(message, reply) {
+    imp.sleep(MESSAGE_WITH_DELAY_LONG_SLEEP);
     reply(message);
 }.bindenv(this));
 
-mm.on(MESSAGE_WITH_SMALL_DELAY, function(message, reply) {
-    imp.sleep(MESSAGE_WITH_DELAY_LIGHT_SLEEP);
+mm.on(MESSAGE_WITH_SHORT_DELAY, function(message, reply) {
+    imp.sleep(MESSAGE_WITH_DELAY_SHORT_SLEEP);
     reply(message);
 }.bindenv(this));
 

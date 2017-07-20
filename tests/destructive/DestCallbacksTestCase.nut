@@ -25,7 +25,6 @@
 // while class being tested can be accessed from global scope as "::Promise".
 
 @include "github:electricimp/MessageManager/MessageManager.lib.nut"
-@include __PATH__+"/../ConnectionManager.nut"
 @include __PATH__+"/../Base.nut"
 @include __PATH__+"/BaseDestructive.nut"
 
@@ -99,7 +98,7 @@ class DestCallbacksTestCase extends ImpTestCase {
                         imp.wakeup(0.5, resolve);
                         return value;
                     }.bindenv(this));
-                    mm.send(MESSAGE_WITH_SMALL_DELAY, BASIC_MESSAGE);
+                    mm.send(MESSAGE_WITH_SHORT_DELAY, BASIC_MESSAGE);
                 } catch (ex) {
                     reject("Catch: " + ex);
                 }
@@ -132,7 +131,7 @@ class DestCallbacksTestCase extends ImpTestCase {
                         reject(ex);
                     }
                 }.bindenv(this));
-                mm.send(MESSAGE_WITH_SMALL_DELAY, BASIC_MESSAGE);
+                mm.send(MESSAGE_WITH_SHORT_DELAY, BASIC_MESSAGE);
             }.bindenv(this));
         }.bindenv(this);
         return createTestAll(execute, DEST_OPTIONS.WO_CONCATENATION, "only_fails");

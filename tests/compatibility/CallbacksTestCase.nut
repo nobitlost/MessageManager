@@ -25,7 +25,6 @@
 // while class being tested can be accessed from global scope as "::Promise".
 
 @include "github:electricimp/MessageManager/MessageManager.lib.nut"
-@include __PATH__+"/../ConnectionManager.nut"
 @include __PATH__+"/../Base.nut"
 
 // CallbacksTestCase
@@ -84,7 +83,7 @@ class CallbacksTestCase extends ImpTestCase {
             mm.onTimeout(function(msg, wait, fail) {
                 try {
                     counter++;
-                    assertDeepEqualWrap(MESSAGE_WITH_HUGE_DELAY, msg.payload.name, "Wrong msg.payload.name");
+                    assertDeepEqualWrap(MESSAGE_WITH_LONG_DELAY, msg.payload.name, "Wrong msg.payload.name");
                     assertDeepEqualWrap(BASIC_MESSAGE, msg.payload.data, "Wrong msg.payload.data");
                     if (ts == 0) {
                         ts = time();
@@ -121,7 +120,7 @@ class CallbacksTestCase extends ImpTestCase {
             mm.onReply(function(msg, response) {
                 reject("onReply handler called");
             }.bindenv(this));
-            mm.send(MESSAGE_WITH_HUGE_DELAY, BASIC_MESSAGE);
+            mm.send(MESSAGE_WITH_LONG_DELAY, BASIC_MESSAGE);
         }.bindenv(this));
     }
 

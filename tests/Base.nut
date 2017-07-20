@@ -24,11 +24,13 @@
 // "Promise" symbol is injected dependency from ImpUnit_Promise module,
 // while class being tested can be accessed from global scope as "::Promise".
 
+@include "github:electricimp/ConnectionManager/ConnectionManager.lib.nut"
+
 const MESSAGE_NAME = "test";
 const MESSAGE_WITHOUT_RESPONSE = "test_no_response";
 const MESSAGE_WITH_DELAY = "test_with_delay";
-const MESSAGE_WITH_HUGE_DELAY = "test_with_huge_delay";
-const MESSAGE_WITH_SMALL_DELAY = "test_with_small_delay";
+const MESSAGE_WITH_LONG_DELAY = "test_with_huge_delay";
+const MESSAGE_WITH_SHORT_DELAY = "test_with_small_delay";
 const MESSAGE_DESTRUCTIVE_RESEND = "test_destructive_resend";
 const MESSAGE_DESTRUCTIVE_RESEND_RESPONSE = "test_destructive_resend_response";
 
@@ -36,8 +38,8 @@ const REPLY_NO_MESSAGES = "No messages";
 const BASIC_MESSAGE = "basic message";
 
 const MESSAGE_WITH_DELAY_SLEEP = 2;
-const MESSAGE_WITH_DELAY_DEEP_SLEEP = 8;
-const MESSAGE_WITH_DELAY_LIGHT_SLEEP = 1;
+const MESSAGE_WITH_DELAY_LONG_SLEEP = 8;
+const MESSAGE_WITH_DELAY_SHORT_SLEEP = 1;
 
 const ERR_REQ_RES_NOT_IDENTICAL = "Request and response messages are not identical";
 const ERR_REQ_RES_IDENTICAL = "Request and response messages are identical";
@@ -77,5 +79,50 @@ function assertDeepEqualWrap(expected, actual, message = null, compare = true) {
         assertDeepEqual(expected.tostring(), actual.tostring(), message);
     } else {
         assertDeepEqual(expected, actual, message);
+    }
+}
+
+function getConnectionManager(dummy = true, options = null) {
+    if (dummy) {
+        return DummyConnectionManager(options);
+    } else {
+        return ConnectionManager(options);
+    }
+}
+
+class DummyConnectionManager {
+
+    _connected = null;
+    _onDisconnect = null;
+    _onConnect = null;
+
+    function constructor(settings = {}) {
+        _connected = true;
+    }
+
+    function isConnected() {
+        return _connected;
+    }
+
+    function disconnect() {
+        this._connected = false;
+        _isFunc(_onDisconnect) && _onDisconnect(true);
+    }
+
+    function connect() {
+        this._connected = true;
+        _isFunc(_onConnect) && _onConnect();
+    }
+
+    function onDisconnect(handler) {
+        _onDisconnect = handler;
+    }
+
+    function onConnect(handler) {
+        _onConnect = handler;
+    }
+
+    function _isFunc(f) {
+        return f && typeof f == "function";
     }
 }
