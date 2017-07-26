@@ -24,13 +24,11 @@
 // "Promise" symbol is injected dependency from ImpUnit_Promise module,
 // while class being tested can be accessed from global scope as "::Promise".
 
-@include "github:electricimp/MessageManager/MessageManager.lib.nut"
-@include __PATH__+"/../Base.nut"
 @include __PATH__+"/BaseDestructive.nut"
 
 // DestConstructorTestCase
 // Destructive tests for MessageManager.DataMessage constructor
-class DestConstructorTestCase extends ImpTestCase {
+class DestConstructorTestCase extends BaseDestructive {
 
     function setUp() {
         infoAboutSide();

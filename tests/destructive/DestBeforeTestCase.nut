@@ -24,13 +24,11 @@
 // "Promise" symbol is injected dependency from ImpUnit_Promise module,
 // while class being tested can be accessed from global scope as "::Promise".
 
-@include "github:electricimp/MessageManager/MessageManager.lib.nut"
-@include __PATH__+"/../Base.nut"
 @include __PATH__+"/BaseDestructive.nut"
 
 // DestBeforeTestCase
 // Destructive tests for MessageManager.beforeSend, MessageManager.beforeRetry
-class DestBeforeTestCase extends ImpTestCase {
+class DestBeforeTestCase extends BaseDestructive {
 
     function setUp() {
         infoAboutSide();
@@ -57,7 +55,7 @@ class DestBeforeTestCase extends ImpTestCase {
                 mm.send(MESSAGE_NAME, BASIC_MESSAGE);
             }.bindenv(this));
         }.bindenv(this);
-        return createTestAll(execute, DEST_OPTIONS.ALL_TYPES, "only_successes");
+        return createTestAll(execute, DEST_OPTIONS.ALL_TYPES, "positive");
     }
 
     function testBeforeSendDropWrongParams() {
@@ -85,7 +83,7 @@ class DestBeforeTestCase extends ImpTestCase {
                 mm.send(MESSAGE_NAME, BASIC_MESSAGE);
             }.bindenv(this));
         }.bindenv(this);
-        return createTestAll(execute, DEST_OPTIONS.SPECIAL_FOR_DROP, "only_successes");
+        return createTestAll(execute, DEST_OPTIONS.SPECIAL_FOR_DROP, "positive");
     }
 
     function testBeforeRetryWithReturn() {
@@ -109,7 +107,7 @@ class DestBeforeTestCase extends ImpTestCase {
                 mm.send(MESSAGE_NAME, BASIC_MESSAGE);
             }.bindenv(this));
         }.bindenv(this);
-        return createTestAll(execute, DEST_OPTIONS.ALL_TYPES, "only_successes");
+        return createTestAll(execute, DEST_OPTIONS.ALL_TYPES, "positive");
     }
 
     function testBeforeRetrySkipWrongParams() {
@@ -143,7 +141,7 @@ class DestBeforeTestCase extends ImpTestCase {
                 mm.send(MESSAGE_NAME, BASIC_MESSAGE);
             }.bindenv(this));
         }.bindenv(this);
-        return createTestAll(execute, DEST_OPTIONS.WO_CONCATENATION, "only_fails");
+        return createTestAll(execute, DEST_OPTIONS.WO_CONCATENATION, "negative");
     }
 
     function testBeforeRetryDropWrongParams() {
@@ -175,6 +173,6 @@ class DestBeforeTestCase extends ImpTestCase {
                 mm.send(MESSAGE_NAME, BASIC_MESSAGE);
             }.bindenv(this));
         }.bindenv(this);
-        return createTestAll(execute, DEST_OPTIONS.SPECIAL_FOR_DROP, "only_successes");
+        return createTestAll(execute, DEST_OPTIONS.SPECIAL_FOR_DROP, "positive");
     }
 }

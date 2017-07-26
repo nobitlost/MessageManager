@@ -24,14 +24,12 @@
 // "Promise" symbol is injected dependency from ImpUnit_Promise module,
 // while class being tested can be accessed from global scope as "::Promise".
 
-@include "github:electricimp/MessageManager/MessageManager.lib.nut"
-@include __PATH__+"/../Base.nut"
 @include __PATH__+"/BaseDestructive.nut"
 
 // DestBasicTestCase
 // Destructive tests for MessageManager.send, MessageManager.on
 // MessageManager.send with wrong type of parameter 'timeout' leads to Runtime Error, so we omit this test
-class DestBasicTestCase extends ImpTestCase {
+class DestBasicTestCase extends BaseDestructive {
 
     function setUp() {
         infoAboutSide();
@@ -76,7 +74,7 @@ class DestBasicTestCase extends ImpTestCase {
             [function(){}, {"\x00\x01": "value"}]
         ];
 
-        return createTestAll(execute, options, "only_fails");
+        return createTestAll(execute, options, "negative");
     }
 
     function testSendWithHandlers() {
@@ -118,7 +116,7 @@ class DestBasicTestCase extends ImpTestCase {
                 }
             }.bindenv(this));
         }.bindenv(this);
-        return createTestAll(execute, DEST_OPTIONS.ALL_TYPES_WO_FUNCTION, "only_successes");
+        return createTestAll(execute, DEST_OPTIONS.ALL_TYPES_WO_FUNCTION, "positive");
     }
 
     function testOn() {
@@ -144,7 +142,7 @@ class DestBasicTestCase extends ImpTestCase {
                 mm.send(MESSAGE_DESTRUCTIVE_RESEND, BASIC_MESSAGE);
             }.bindenv(this));
         }.bindenv(this);
-        return createTestAll(execute, DEST_OPTIONS.ALL_TYPES_WO_FUNCTION, "only_successes");
+        return createTestAll(execute, DEST_OPTIONS.ALL_TYPES_WO_FUNCTION, "positive");
     }
 
     function testOnWithReturn() {
@@ -169,6 +167,6 @@ class DestBasicTestCase extends ImpTestCase {
                 mm.send(MESSAGE_DESTRUCTIVE_RESEND, BASIC_MESSAGE);
             }.bindenv(this));
         }.bindenv(this);
-        return createTestAll(execute, DEST_OPTIONS.ALL_TYPES, "only_successes");
+        return createTestAll(execute, DEST_OPTIONS.ALL_TYPES, "positive");
     }
 }

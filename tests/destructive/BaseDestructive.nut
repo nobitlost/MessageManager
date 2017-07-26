@@ -24,73 +24,78 @@
 // "Promise" symbol is injected dependency from ImpUnit_Promise module,
 // while class being tested can be accessed from global scope as "::Promise".
 
-// createTestAll
-// Create Promise for series of tests
-// 
-// @param {function} execute - Function to be executed
-// @param {array} options - Array of options to be passed into 'execute' function 
-// @param {string} type - The condition for the success of all tests (only_successes|only_fails)
-// @param {boolean} log - Display each test results
-// @return {Promise}
-function createTestAll(execute, options, type = "only_successes", log = false) {
-    return Promise(function(resolve, reject) {
-        local length = options.len();
-        local index = 0;
-        local successes = 0;
-        local fails = 0;
-        local last_reason = null;
-        local next;
-        next = function() {
-            try {
-                switch (type) {
-                    case "only_fails": {
-                        if (successes > 0) {
-                            reject("createTestAll resolved one of the tests, but 'type' was 'only_fails'");
-                            return;
+@include __PATH__+"/../Base.nut"
+
+class BaseDestructive extends ImpTestCase {
+    
+    // createTestAll
+    // Create Promise for series of tests
+    // 
+    // @param {function} execute - Function to be executed
+    // @param {array} options - Array of options to be passed into 'execute' function 
+    // @param {string} type - The condition for the success of all tests (positive|negative)
+    // @param {boolean} log - Display each test results
+    // @return {Promise}
+    function createTestAll(execute, options, type = "positive", log = false) {
+        return Promise(function(resolve, reject) {
+            local length = options.len();
+            local index = 0;
+            local successes = 0;
+            local fails = 0;
+            local last_reason = null;
+            local next;
+            next = function() {
+                try {
+                    switch (type) {
+                        case "negative": {
+                            if (successes > 0) {
+                                reject("createTestAll resolved one of the tests, but 'type' was 'negative'");
+                                return;
+                            }
+                            if (fails >= length) {
+                                resolve();
+                                return;
+                            }
+                            break;
                         }
-                        if (fails >= length) {
-                            resolve();
-                            return;
+                        case "positive": default: {
+                            if (fails > 0) {
+                                reject(last_reason);
+                                return;
+                            }
+                            if (successes >= length) {
+                                resolve();
+                                return;
+                            }
+                            break;
                         }
-                        break;
                     }
-                    case "only_successes": default: {
-                        if (fails > 0) {
-                            reject(last_reason);
-                            return;
-                        }
-                        if (successes >= length) {
-                            resolve();
-                            return;
-                        }
-                        break;
-                    }
+                    local params = options[index++];
+                    execute(params)
+                        .then(function(value) {
+                            successes++;
+                            if (log) {
+                                info("Resolved test with params: " + params);
+                            }
+                        }.bindenv(this))
+                        .fail(function(reason) {
+                            fails++;
+                            last_reason = reason;
+                            if (log) {
+                                info("Rejected test with params: " + params);
+                                info("Reason: " + reason);
+                            }
+                        }.bindenv(this))
+                        .finally(function(valueOrReason) {
+                            imp.wakeup(0, next);
+                        }.bindenv(this));
+                } catch(ex) {
+                    reject("Unexpected error while execute series of tests: " + ex);
                 }
-                local params = options[index++];
-                execute(params)
-                    .then(function(value) {
-                        successes++;
-                        if (log) {
-                            info("Resolved test with params: " + params);
-                        }
-                    }.bindenv(this))
-                    .fail(function(reason) {
-                        fails++;
-                        last_reason = reason;
-                        if (log) {
-                            info("Rejected test with params: " + params);
-                            info("Reason: " + reason);
-                        }
-                    }.bindenv(this))
-                    .finally(function(valueOrReason) {
-                        imp.wakeup(0, next);
-                    }.bindenv(this));
-            } catch(ex) {
-                reject("Unexpected error while execute series of tests: " + ex);
-            }
-        }.bindenv(this);
-        next();
-    }.bindenv(this));
+            }.bindenv(this);
+            next();
+        }.bindenv(this));
+    }
 }
 
 class EmptyClass {

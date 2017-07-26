@@ -24,13 +24,11 @@
 // "Promise" symbol is injected dependency from ImpUnit_Promise module,
 // while class being tested can be accessed from global scope as "::Promise".
 
-@include "github:electricimp/MessageManager/MessageManager.lib.nut"
-@include __PATH__+"/../Base.nut"
 @include __PATH__+"/BaseDestructive.nut"
 
 // DestCallbacksTestCase
 // Destructive tests for MessageManager.onFail MessageManager.onTimeout, MessageManager.onAck, MessageManager.onReply
-class DestCallbacksTestCase extends ImpTestCase {
+class DestCallbacksTestCase extends BaseDestructive {
 
     function setUp() {
         infoAboutSide();
@@ -57,7 +55,7 @@ class DestCallbacksTestCase extends ImpTestCase {
                 }
             }.bindenv(this));
         }.bindenv(this);
-        return createTestAll(execute, DEST_OPTIONS.ALL_TYPES, "only_successes");
+        return createTestAll(execute, DEST_OPTIONS.ALL_TYPES, "positive");
     }
 
     function testOnFailRetryWrongParams() {
@@ -82,7 +80,7 @@ class DestCallbacksTestCase extends ImpTestCase {
                 mm.send(MESSAGE_NAME, BASIC_MESSAGE);
             }.bindenv(this));
         }.bindenv(this);
-        return createTestAll(execute, DEST_OPTIONS.WO_CONCATENATION, "only_fails");
+        return createTestAll(execute, DEST_OPTIONS.WO_CONCATENATION, "negative");
     }
     
     function testOnTimeoutWithReturn() {
@@ -104,7 +102,7 @@ class DestCallbacksTestCase extends ImpTestCase {
                 }
             }.bindenv(this));
         }.bindenv(this);
-        return createTestAll(execute, DEST_OPTIONS.ALL_TYPES, "only_successes");
+        return createTestAll(execute, DEST_OPTIONS.ALL_TYPES, "positive");
     }
 
     function testOnTimeoutWaitWrongParams() {
@@ -134,7 +132,7 @@ class DestCallbacksTestCase extends ImpTestCase {
                 mm.send(MESSAGE_WITH_SHORT_DELAY, BASIC_MESSAGE);
             }.bindenv(this));
         }.bindenv(this);
-        return createTestAll(execute, DEST_OPTIONS.WO_CONCATENATION, "only_fails");
+        return createTestAll(execute, DEST_OPTIONS.WO_CONCATENATION, "negative");
     }
 
     function testOnAckWithReturn() {
@@ -155,7 +153,7 @@ class DestCallbacksTestCase extends ImpTestCase {
                 }
             }.bindenv(this));
         }.bindenv(this);
-        return createTestAll(execute, DEST_OPTIONS.ALL_TYPES, "only_successes");
+        return createTestAll(execute, DEST_OPTIONS.ALL_TYPES, "positive");
     }
 
     function testOnReplyWithReturn() {
@@ -176,6 +174,6 @@ class DestCallbacksTestCase extends ImpTestCase {
                 }
             }.bindenv(this));
         }.bindenv(this);
-        return createTestAll(execute, DEST_OPTIONS.ALL_TYPES, "only_successes");
+        return createTestAll(execute, DEST_OPTIONS.ALL_TYPES, "positive");
     }
 }
