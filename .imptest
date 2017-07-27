@@ -3,8 +3,8 @@
     "devices": [
         "233f4aafaf952dee" /* G */
     ],
-    "agentFile": false,
-    "deviceFile": false,
+    "agentFile": "MessageManager.lib.nut",
+    "deviceFile": "MessageManager.lib.nut",
     "stopOnFailure": false,
     "timeout": 60
 }
