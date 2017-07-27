@@ -74,78 +74,79 @@ class LocalCallbacksTestCase extends ImpTestCase {
         }.bindenv(this));
     }
 
-    function testOnTimeout() {
-        return Promise(function(resolve, reject) {
-            local counter = 0;
-            local ts = 0;
-            local messageTimeout = 2;
-            local messageTimeoutInc = 0;
-            local mm = MessageManager({
-                "firstMessageId":  msgId,
-                "nextIdGenerator": msgIdGenerator,
-                "messageTimeout":  messageTimeout
-            });
-            local results = {
-                "onAck": false,
-                "onTimeout": false,
-                "onFail": false,
-                "onReply": false
-            };
-            mm.onTimeout(function(msg, wait, fail) {
-                !results["onTimeout"] && reject("global onTimeout handler called before handlers.onTimeout");
-            }.bindenv(this));
-            mm.onFail(function(msg, reason, retry) {
-                !results["onFail"] && reject("global onFail handler called before handlers.onFail");
-            }.bindenv(this));
-            mm.onReply(function(msg, response) {
-                !results["onReply"] && reject("global onReply handler called before handlers.onReply");
-            }.bindenv(this));
-            local dm = mm.send(MESSAGE_WITH_LONG_DELAY, BASIC_MESSAGE);
-            dm.onTimeout(function(msg, wait, fail) {
-                if (!results["onTimeout"]) results["onTimeout"] = true;
-                try {
-                    counter++;
-                    assertDeepEqualWrap(MESSAGE_WITH_LONG_DELAY, msg.payload.name, "Wrong msg.payload.name");
-                    assertDeepEqualWrap(BASIC_MESSAGE, msg.payload.data, "Wrong msg.payload.data");
-                    if (ts == 0) {
-                        ts = time();
-                    }
-                    local shift = time() - ts;
-                    switch (counter) {
-                        case 1:
-                            assertDeepEqualWrap(messageTimeoutInc, shift, "Wrong message timeout(1)");
-                            messageTimeoutInc += messageTimeout;
-                            wait();
-                            break;
-                        case 2:
-                            assertDeepEqualWrap(messageTimeoutInc, shift, "Wrong message timeout(2)");
-                            local w8 = 2;
-                            messageTimeoutInc += w8;
-                            wait(w8);
-                            break;
-                        case 3:
-                            assertDeepEqualWrap(messageTimeoutInc, shift, "Wrong message timeout(3)");
-                            fail();
-                            break;
-                    }
-                } catch (ex) {
-                    reject(ex);
-                }
-            }.bindenv(this));
-            dm.onFail(function(msg, reason, retry) {
-                if (!results["onFail"]) results["onFail"] = true;
-                if (counter == 3) {
-                    resolve();
-                } else {
-                    reject("DataMessage.onFail handler called. Reason: " + reason);
-                }
-            }.bindenv(this));
-            dm.onReply(function(msg, response) {
-                if (!results["onFail"]) results["onFail"] = true;
-                reject("DataMessage.onReply handler called");
-            }.bindenv(this));
-        }.bindenv(this));
-    }
+    // https://github.com/electricimp/MessageManager/issues/22
+    // function testOnTimeout() {
+    //     return Promise(function(resolve, reject) {
+    //         local counter = 0;
+    //         local ts = 0;
+    //         local messageTimeout = 2;
+    //         local messageTimeoutInc = 0;
+    //         local mm = MessageManager({
+    //             "firstMessageId":  msgId,
+    //             "nextIdGenerator": msgIdGenerator,
+    //             "messageTimeout":  messageTimeout
+    //         });
+    //         local results = {
+    //             "onAck": false,
+    //             "onTimeout": false,
+    //             "onFail": false,
+    //             "onReply": false
+    //         };
+    //         mm.onTimeout(function(msg, wait, fail) {
+    //             !results["onTimeout"] && reject("global onTimeout handler called before handlers.onTimeout");
+    //         }.bindenv(this));
+    //         mm.onFail(function(msg, reason, retry) {
+    //             !results["onFail"] && reject("global onFail handler called before handlers.onFail");
+    //         }.bindenv(this));
+    //         mm.onReply(function(msg, response) {
+    //             !results["onReply"] && reject("global onReply handler called before handlers.onReply");
+    //         }.bindenv(this));
+    //         local dm = mm.send(MESSAGE_WITH_LONG_DELAY, BASIC_MESSAGE);
+    //         dm.onTimeout(function(msg, wait, fail) {
+    //             if (!results["onTimeout"]) results["onTimeout"] = true;
+    //             try {
+    //                 counter++;
+    //                 assertDeepEqualWrap(MESSAGE_WITH_LONG_DELAY, msg.payload.name, "Wrong msg.payload.name");
+    //                 assertDeepEqualWrap(BASIC_MESSAGE, msg.payload.data, "Wrong msg.payload.data");
+    //                 if (ts == 0) {
+    //                     ts = time();
+    //                 }
+    //                 local shift = time() - ts;
+    //                 switch (counter) {
+    //                     case 1:
+    //                         assertDeepEqualWrap(messageTimeoutInc, shift, "Wrong message timeout(1)");
+    //                         messageTimeoutInc += messageTimeout;
+    //                         wait();
+    //                         break;
+    //                     case 2:
+    //                         assertDeepEqualWrap(messageTimeoutInc, shift, "Wrong message timeout(2)");
+    //                         local w8 = 2;
+    //                         messageTimeoutInc += w8;
+    //                         wait(w8);
+    //                         break;
+    //                     case 3:
+    //                         assertDeepEqualWrap(messageTimeoutInc, shift, "Wrong message timeout(3)");
+    //                         fail();
+    //                         break;
+    //                 }
+    //             } catch (ex) {
+    //                 reject(ex);
+    //             }
+    //         }.bindenv(this));
+    //         dm.onFail(function(msg, reason, retry) {
+    //             if (!results["onFail"]) results["onFail"] = true;
+    //             if (counter == 3) {
+    //                 resolve();
+    //             } else {
+    //                 reject("DataMessage.onFail handler called. Reason: " + reason);
+    //             }
+    //         }.bindenv(this));
+    //         dm.onReply(function(msg, response) {
+    //             if (!results["onFail"]) results["onFail"] = true;
+    //             reject("DataMessage.onReply handler called");
+    //         }.bindenv(this));
+    //     }.bindenv(this));
+    // }
 
     function testOnAck() {
         return Promise(function(resolve, reject) {
