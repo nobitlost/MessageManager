@@ -161,20 +161,19 @@ class ConstructorTestCase extends ImpTestCase {
     // autoRetry, maxAutoRetries
     function testAutoRetry() {
         return Promise(function(resolve, reject) {
-            local maxAutoRetries = 4;
-            local messageTimeout = MESSAGE_WITH_DELAY_SLEEP - 1;
+            local maxAutoRetries = 2;
             local mm = MessageManager({
                 "firstMessageId":  msgId,
                 "nextIdGenerator": msgIdGenerator,
                 "maxAutoRetries":  maxAutoRetries,
                 "autoRetry":       true,
-                "retryInterval":   2,
-                "messageTimeout":  messageTimeout
+                "retryInterval":   0,
+                "messageTimeout":  0
             });
             mm.beforeRetry(function(msg, skip, drop) {
                 local tries = msg.tries + 1; // start counting from one, not zero 
                 if (tries >= maxAutoRetries) {
-                    imp.wakeup(MESSAGE_WITH_DELAY_SLEEP + 1, function() {
+                    imp.wakeup(MESSAGE_WITH_DELAY_SLEEP, function() {
                         try {
                             assertDeepEqualWrap(maxAutoRetries, tries, "There were more than maxAutoRetries tries made");
                             resolve();
@@ -186,9 +185,6 @@ class ConstructorTestCase extends ImpTestCase {
             }.bindenv(this));
             mm.onTimeout(function(msg, wait, fail) {
                 fail();
-            }.bindenv(this));
-            mm.onReply(function(msg, response) {
-                reject("onReply handler called");
             }.bindenv(this));
             mm.send(MESSAGE_WITH_DELAY, BASIC_MESSAGE);
         }.bindenv(this));

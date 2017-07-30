@@ -62,7 +62,8 @@ class BasicTestCase extends ImpTestCase {
         return Promise(function(resolve, reject) {
             local mm = MessageManager({
                 "firstMessageId":  msgId,
-                "nextIdGenerator": msgIdGenerator
+                "nextIdGenerator": msgIdGenerator,
+                "maxMessageRate": 12
             });
             local messages = [null, true, 0, 1, -1, 0.0, 4.2, blob(8), "some string", ["first", "second"], {"key": "value"}];
             local failed = false;
