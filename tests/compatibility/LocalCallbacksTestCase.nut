@@ -37,29 +37,18 @@ class LocalCallbacksTestCase extends ImpTestCase {
     function testOnFail() {
         return Promise(function(resolve, reject) {
             local counter = 0;
-            local cm = getConnectionManager();
             local mm = MessageManager({
-                "firstMessageId":    msgId,
-                "nextIdGenerator":   msgIdGenerator,
-                "connectionManager": cm
+                "firstMessageId":  msgId,
+                "nextIdGenerator": msgIdGenerator
             });
-            mm.onFail(function(msg, reason, retry) {
-                reject("onFail handler called");
-            }.bindenv(this));
-            mm.onReply(function(msg, response) {
-                reject("onReply handler called");
-            }.bindenv(this));
-            local dm = mm.send(MESSAGE_NAME, BASIC_MESSAGE);
+            local dm = mm.send(MESSAGE_WITH_NO_HANDLER, BASIC_MESSAGE);
             dm.onFail(function(msg, reason, retry) {
                 try {
-                    counter++;
-                    assertDeepEqualWrap(MESSAGE_NAME, msg.payload.name, "Wrong msg.payload.name");
+                    assertDeepEqualWrap(MESSAGE_WITH_NO_HANDLER, msg.payload.name, "Wrong msg.payload.name");
                     assertDeepEqualWrap(BASIC_MESSAGE, msg.payload.data, "Wrong msg.payload.data");
-                    assertDeepEqualWrap(MM_ERR_NO_CONNECTION, reason, "Wrong reason");
-                    if (counter == 1) {
-                        cm.connect();
-                        retry();
-                        cm.disconnect();
+                    assertDeepEqualWrap(MM_ERR_NO_HANDLER, reason, "Wrong reason");
+                    if (counter++ == 0) {
+                        retry(1);
                     } else {
                         resolve();
                     }
@@ -70,7 +59,6 @@ class LocalCallbacksTestCase extends ImpTestCase {
             dm.onReply(function(msg, response) {
                 reject("DataMessage.onReply handler called");
             }.bindenv(this));
-            cm.disconnect();
         }.bindenv(this));
     }
 

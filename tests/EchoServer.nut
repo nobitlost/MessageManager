@@ -29,17 +29,15 @@
 // EchoServer
 // This file should be included into agent or device code file, depending on witch one will be echo server (will respond with received message)
 
-local cm = getConnectionManager();
-
-local onPartnerConnected = function(reply) {
-    isAgentSide() && cm.connect();
+local params = {};
+if (!isAgentSide()) {
+    params["connectionManager"] <- getConnectionManager();
+}
+params["onPartnerConnected"] <- function(reply) {
     reply(REPLY_NO_MESSAGES);
-};
+}.bindenv(this);
 
-local mm = MessageManager({
-    "connectionManager":  cm,
-    "onPartnerConnected": onPartnerConnected.bindenv(this)
-});
+local mm = MessageManager(params);
 
 mm.on(MESSAGE_NAME, function(message, reply) {
     reply(message);

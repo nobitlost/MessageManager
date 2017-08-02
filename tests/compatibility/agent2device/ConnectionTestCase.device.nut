@@ -24,4 +24,15 @@
 // "Promise" symbol is injected dependency from ImpUnit_Promise module,
 // while class being tested can be accessed from global scope as "::Promise".
 
-@include __PATH__+"/../../EchoServer.nut"
+@include __PATH__+"/../../Base.nut"
+
+local mm = MessageManager({
+    "connectionManager": getConnectionManager(true),
+    "onPartnerConnected": function(reply) {
+        reply(REPLY_NO_MESSAGES);
+    }.bindenv(this)
+});
+
+mm.on(MESSAGE_NAME, function(message, reply) {
+    reply(message);
+}.bindenv(this));

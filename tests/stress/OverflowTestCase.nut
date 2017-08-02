@@ -179,6 +179,7 @@ class OverflowTestCase extends ImpTestCase {
         if (isAgentSide()) {
             info("ConnectionManager is a device-side only library, so we skip this test that running on the agent");
             return Promise(function(resolve, reject) {
+                local mm = MessageManager();
                 resolve();
             });
         }

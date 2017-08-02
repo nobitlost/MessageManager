@@ -38,18 +38,18 @@ class DestDMCallbacksTestCase extends BaseDestructive {
         local execute = function(value) {
             return Promise(function(resolve, reject) {
                 try {
-                    local cm = getConnectionManager();
                     local mm = MessageManager({
                         "firstMessageId":    msgId,
-                        "nextIdGenerator":   msgIdGenerator,
-                        "connectionManager": cm
+                        "nextIdGenerator":   msgIdGenerator
                     });
-                    local dm = mm.send(MESSAGE_NAME, BASIC_MESSAGE);
+                    local dm = mm.send(MESSAGE_WITH_NO_HANDLER, BASIC_MESSAGE);
                     dm.onFail(function(msg, reason, retry) {
                         imp.wakeup(0.5, resolve);
                         return value;
                     }.bindenv(this));
-                    cm.disconnect();
+                    dm.onReply(function(msg, response) {
+                        reject("DataMessage.onReply handler called");
+                    }.bindenv(this));
                 } catch (ex) {
                     reject("Catch: " + ex);
                 }
@@ -61,14 +61,12 @@ class DestDMCallbacksTestCase extends BaseDestructive {
     function testOnFailRetryWrongParams() {
         local execute = function(value) {
             return Promise(function(resolve, reject) {
-                local cm = getConnectionManager();
                 local mm = MessageManager({
                     "firstMessageId":    msgId,
                     "nextIdGenerator":   msgIdGenerator,
-                    "connectionManager": cm,
                     "retryInterval":     1
                 });
-                local dm = mm.send(MESSAGE_NAME, BASIC_MESSAGE);
+                local dm = mm.send(MESSAGE_WITH_NO_HANDLER, BASIC_MESSAGE);
                 dm.onFail(function(msg, reason, retry) {
                     try {
                         imp.wakeup(0.5, resolve);
@@ -77,7 +75,9 @@ class DestDMCallbacksTestCase extends BaseDestructive {
                         reject("Catch onFail.retry: " + ex);
                     }
                 }.bindenv(this));
-                cm.disconnect();
+                dm.onReply(function(msg, response) {
+                    reject("DataMessage.onReply handler called");
+                }.bindenv(this));
             }.bindenv(this));
         }.bindenv(this);
         return createTestAll(execute, DEST_OPTIONS.WO_CONCATENATION, "negative");

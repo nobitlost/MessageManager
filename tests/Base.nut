@@ -31,6 +31,7 @@ const MESSAGE_WITHOUT_RESPONSE = "test_no_response";
 const MESSAGE_WITH_DELAY = "test_with_delay";
 const MESSAGE_WITH_LONG_DELAY = "test_with_huge_delay";
 const MESSAGE_WITH_SHORT_DELAY = "test_with_small_delay";
+const MESSAGE_WITH_NO_HANDLER = "test_with_no_handler";
 const MESSAGE_DESTRUCTIVE_RESEND = "test_destructive_resend";
 const MESSAGE_DESTRUCTIVE_RESEND_RESPONSE = "test_destructive_resend_response";
 

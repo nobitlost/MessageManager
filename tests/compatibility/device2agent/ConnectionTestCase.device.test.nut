@@ -24,4 +24,37 @@
 // "Promise" symbol is injected dependency from ImpUnit_Promise module,
 // while class being tested can be accessed from global scope as "::Promise".
 
-@include __PATH__+"/../ConnectionTestCase.nut"
+@include __PATH__+"/../../Base.nut"
+
+// ConnectionTestCase
+// Tests for MessageManager constructor options (onPartnerConnected, connectionManager)
+// Test connection with dummy ConnectionManager
+class ConnectionRealTestCase extends ImpTestCase {
+
+    function setUp() {
+        infoAboutSide();
+    }
+    
+    function testConnection() {
+        return Promise(function(resolve, reject) {
+            local connectedReply = null;
+            local onConnectedReply = function(data) {
+                connectedReply = data;
+            }.bindenv(this);
+            local mm = MessageManager({
+                "firstMessageId":     msgId,
+                "nextIdGenerator":    msgIdGenerator,
+                "connectionManager":  getConnectionManager(true),
+                "onConnectedReply":   onConnectedReply.bindenv(this)
+            });
+            imp.wakeup(2, function() {
+                try {
+                    assertDeepEqualWrap(REPLY_NO_MESSAGES, connectedReply, "Wrong connected reply");
+                    resolve();
+                } catch (ex) {
+                    reject(ex);
+                }
+            }.bindenv(this));
+        }.bindenv(this));
+    }
+}
