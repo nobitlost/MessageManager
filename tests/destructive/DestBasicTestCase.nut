@@ -40,6 +40,7 @@ class DestBasicTestCase extends BaseDestructive {
             // Device Runtime Error: ERROR: skipped unserialisable data
             info("This test is not supported on the device-side, so we skip this test that running on the device");
             return Promise(function(resolve, reject) {
+                local mm = MessageManager();
                 resolve();
             });
         }

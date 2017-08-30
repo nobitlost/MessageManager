@@ -25,6 +25,7 @@
 // while class being tested can be accessed from global scope as "::Promise".
 
 @include "github:electricimp/ConnectionManager/ConnectionManager.lib.nut"
+@include __PATH__+"/conf.nut"
 
 const MESSAGE_NAME = "test";
 const MESSAGE_WITHOUT_RESPONSE = "test_no_response";
@@ -126,4 +127,12 @@ class DummyConnectionManager {
     function _isFunc(f) {
         return f && typeof f == "function";
     }
+}
+
+// Fix out-of-sync of the agent and device, if needed
+if (DEVICE_ADDITIONAL_WAITING_TIME > 0 && !isAgentSide()) {
+    imp.sleep(DEVICE_ADDITIONAL_WAITING_TIME);
+}
+if (AGENT_ADDITIONAL_WAITING_TIME > 0 && isAgentSide()) {
+    imp.sleep(AGENT_ADDITIONAL_WAITING_TIME);
 }
