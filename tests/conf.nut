@@ -26,6 +26,6 @@
 // This is necessary, since the agent and device cannot start simultaneously but library required that behavior.
 // Specify 0 if delay is not needed.
 // This parameter adds a delay to the device, measured in seconds.
-const DEVICE_ADDITIONAL_WAITING_TIME = 0;
+const DEVICE_ADDITIONAL_WAITING_TIME = 1;
 // This parameter adds a delay to the agent, measured in seconds.
 const AGENT_ADDITIONAL_WAITING_TIME = 0;

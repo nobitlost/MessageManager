@@ -6,5 +6,5 @@
     "agentFile": "MessageManager.lib.nut",
     "deviceFile": "MessageManager.lib.nut",
     "stopOnFailure": false,
-    "timeout": 60
+    "timeout": 120
 }
