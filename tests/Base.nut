@@ -24,7 +24,7 @@
 // "Promise" symbol is injected dependency from ImpUnit_Promise module,
 // while class being tested can be accessed from global scope as "::Promise".
 
-@include "github:electricimp/ConnectionManager/ConnectionManager.lib.nut"
+@include "https://raw.githubusercontent.com/electricimp/ConnectionManager/master/ConnectionManager.lib.nut"
 @include __PATH__+"/conf.nut"
 
 const MESSAGE_NAME = "test";
