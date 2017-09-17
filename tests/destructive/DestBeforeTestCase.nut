@@ -58,34 +58,33 @@ class DestBeforeTestCase extends BaseDestructive {
         return createTestAll(execute, DEST_OPTIONS.ALL_TYPES, "positive");
     }
 
-    // https://github.com/electricimp/MessageManager/issues/21
-    // function testBeforeSendDropWrongParams() {
-    //     local execute = function(pair) {
-    //         return Promise(function(resolve, reject) {
-    //             local mm = MessageManager({
-    //                 "firstMessageId":  msgId,
-    //                 "nextIdGenerator": msgIdGenerator
-    //             });
-    //             mm.beforeSend(function(msg, enqueue, drop) {
-    //                 try {
-    //                     drop(pair[0], pair[1]);
-    //                 } catch (ex) {
-    //                     reject("Catch drop: " + ex);
-    //                 }
-    //             }.bindenv(this));
-    //             mm.onFail(function(msg, reason, retry) {
-    //                 try {
-    //                     pair[1] != null && assertDeepEqualWrap(pair[1], reason, "Wrong reason provided");
-    //                     resolve();
-    //                 } catch (ex) {
-    //                     reject(ex);
-    //                 }
-    //             }.bindenv(this));
-    //             mm.send(MESSAGE_NAME, BASIC_MESSAGE);
-    //         }.bindenv(this));
-    //     }.bindenv(this);
-    //     return createTestAll(execute, DEST_OPTIONS.SPECIAL_FOR_DROP, "positive");
-    // }
+    function testBeforeSendDropWrongParams() {
+        local execute = function(pair) {
+            return Promise(function(resolve, reject) {
+                local mm = MessageManager({
+                    "firstMessageId":  msgId,
+                    "nextIdGenerator": msgIdGenerator
+                });
+                mm.beforeSend(function(msg, enqueue, drop) {
+                    try {
+                        drop(pair[0], pair[1]);
+                    } catch (ex) {
+                        reject("Catch drop: " + ex);
+                    }
+                }.bindenv(this));
+                mm.onFail(function(msg, reason, retry) {
+                    try {
+                        pair[1] != null && assertDeepEqualWrap(pair[1], reason, "Wrong reason provided");
+                        resolve();
+                    } catch (ex) {
+                        reject(ex);
+                    }
+                }.bindenv(this));
+                mm.send(MESSAGE_NAME, BASIC_MESSAGE);
+            }.bindenv(this));
+        }.bindenv(this);
+        return createTestAll(execute, DEST_OPTIONS.SPECIAL_FOR_DROP, "positive");
+    }
 
     function testBeforeRetryWithReturn() {
         local execute = function(value) {
@@ -145,36 +144,35 @@ class DestBeforeTestCase extends BaseDestructive {
         return createTestAll(execute, DEST_OPTIONS.WO_CONCATENATION, "negative");
     }
 
-    // https://github.com/electricimp/MessageManager/issues/20
-    // function testBeforeRetryDropWrongParams() {
-    //     local execute = function(pair) {
-    //         return Promise(function(resolve, reject) {
-    //             local mm = MessageManager({
-    //                 "firstMessageId":  msgId,
-    //                 "nextIdGenerator": msgIdGenerator,
-    //                 "retryInterval":   1
-    //             });
-    //             mm.beforeSend(function(msg, enqueue, drop) {
-    //                 enqueue();
-    //             }.bindenv(this));
-    //             mm.beforeRetry(function(msg, skip, drop) {
-    //                 try {
-    //                     drop(pair[0], pair[1]);
-    //                 } catch (ex) {
-    //                     reject("Catch drop: " + ex);
-    //                 }
-    //             }.bindenv(this));
-    //             mm.onFail(function(msg, reason, retry) {
-    //                 try {
-    //                     pair[1] != null && assertDeepEqualWrap(pair[1], reason, "Wrong reason provided");
-    //                     resolve();
-    //                 } catch (ex) {
-    //                     reject(ex);
-    //                 }
-    //             }.bindenv(this));
-    //             mm.send(MESSAGE_NAME, BASIC_MESSAGE);
-    //         }.bindenv(this));
-    //     }.bindenv(this);
-    //     return createTestAll(execute, DEST_OPTIONS.SPECIAL_FOR_DROP, "positive");
-    // }
+    function testBeforeRetryDropWrongParams() {
+        local execute = function(pair) {
+            return Promise(function(resolve, reject) {
+                local mm = MessageManager({
+                    "firstMessageId":  msgId,
+                    "nextIdGenerator": msgIdGenerator,
+                    "retryInterval":   1
+                });
+                mm.beforeSend(function(msg, enqueue, drop) {
+                    enqueue();
+                }.bindenv(this));
+                mm.beforeRetry(function(msg, skip, drop) {
+                    try {
+                        drop(pair[0], pair[1]);
+                    } catch (ex) {
+                        reject("Catch drop: " + ex);
+                    }
+                }.bindenv(this));
+                mm.onFail(function(msg, reason, retry) {
+                    try {
+                        pair[1] != null && assertDeepEqualWrap(pair[1], reason, "Wrong reason provided");
+                        resolve();
+                    } catch (ex) {
+                        reject(ex);
+                    }
+                }.bindenv(this));
+                mm.send(MESSAGE_NAME, BASIC_MESSAGE);
+            }.bindenv(this));
+        }.bindenv(this);
+        return createTestAll(execute, DEST_OPTIONS.SPECIAL_FOR_DROP, "positive");
+    }
 }
