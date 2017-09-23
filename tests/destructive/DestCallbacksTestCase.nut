@@ -34,30 +34,29 @@ class DestCallbacksTestCase extends BaseDestructive {
         infoAboutSide();
     }
 
-    // https://github.com/electricimp/MessageManager/issues/21
-    // function testOnFailWithReturn() {
-    //     local execute = function(value) {
-    //         return Promise(function(resolve, reject) {
-    //             try {
-    //                 local mm = MessageManager({
-    //                     "firstMessageId":  msgId,
-    //                     "nextIdGenerator": msgIdGenerator
-    //                 });
-    //                 mm.beforeSend(function(msg, enqueue, drop) {
-    //                     drop(false);
-    //                 }.bindenv(this));
-    //                 mm.onFail(function(msg, reason, retry) {
-    //                     imp.wakeup(0.5, resolve);
-    //                     return value;
-    //                 }.bindenv(this));
-    //                 mm.send(MESSAGE_NAME, BASIC_MESSAGE);
-    //             } catch (ex) {
-    //                 reject("Catch: " + ex);
-    //             }
-    //         }.bindenv(this));
-    //     }.bindenv(this);
-    //     return createTestAll(execute, DEST_OPTIONS.ALL_TYPES, "positive");
-    // }
+    function testOnFailWithReturn() {
+        local execute = function(value) {
+            return Promise(function(resolve, reject) {
+                try {
+                    local mm = MessageManager({
+                        "firstMessageId":  msgId,
+                        "nextIdGenerator": msgIdGenerator
+                    });
+                    mm.beforeSend(function(msg, enqueue, drop) {
+                        drop(false);
+                    }.bindenv(this));
+                    mm.onFail(function(msg, reason, retry) {
+                        imp.wakeup(0.5, resolve);
+                        return value;
+                    }.bindenv(this));
+                    mm.send(MESSAGE_NAME, BASIC_MESSAGE);
+                } catch (ex) {
+                    reject("Catch: " + ex);
+                }
+            }.bindenv(this));
+        }.bindenv(this);
+        return createTestAll(execute, DEST_OPTIONS.ALL_TYPES, "positive");
+    }
 
     function testOnFailRetryWrongParams() {
         local execute = function(value) {
