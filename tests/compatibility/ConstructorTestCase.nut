@@ -118,45 +118,44 @@ class ConstructorTestCase extends ImpTestCase {
     }
 
     // retryInterval
-    // https://github.com/electricimp/MessageManager/issues/20
-    // function testRetry() {
-    //     return Promise(function(resolve, reject) {
-    //         local ts = 0;
-    //         local retryInterval = 2;
-    //         local mm = MessageManager({
-    //             "firstMessageId":  msgId,
-    //             "nextIdGenerator": msgIdGenerator,
-    //             "retryInterval":   retryInterval
-    //         });
-    //         mm.beforeSend(function(msg, enqueue, drop) {
-    //             enqueue();
-    //         }.bindenv(this));
-    //         mm.beforeRetry(function(msg, skip, drop) {
-    //             if (ts == 0) {
-    //                 ts = time();
-    //                 skip();
-    //             } else {
-    //                 local shift = time() - ts;
-    //                 if (retryInterval == shift) {
-    //                     resolve();
-    //                 } else {
-    //                     reject("Retry attempt called with wrong retry interval: " + shift + ", must be: " + retryInterval);
-    //                 }
-    //                 drop();
-    //             }
-    //         });
-    //         mm.onFail(function(msg, reason, retry) {
-    //             reject("onFail handler called. Reason: " + reason);
-    //         });
-    //         mm.onTimeout(function(msg, wait, fail) {
-    //             fail();
-    //         });
-    //         mm.onReply(function(msg, response) {
-    //             reject("onReply handler called");
-    //         }.bindenv(this));
-    //         mm.send(MESSAGE_NAME, BASIC_MESSAGE);
-    //     }.bindenv(this));
-    // }
+    function testRetry() {
+        return Promise(function(resolve, reject) {
+            local ts = 0;
+            local retryInterval = 2;
+            local mm = MessageManager({
+                "firstMessageId":  msgId,
+                "nextIdGenerator": msgIdGenerator,
+                "retryInterval":   retryInterval
+            });
+            mm.beforeSend(function(msg, enqueue, drop) {
+                enqueue();
+            }.bindenv(this));
+            mm.beforeRetry(function(msg, skip, drop) {
+                if (ts == 0) {
+                    ts = time();
+                    skip();
+                } else {
+                    local shift = time() - ts;
+                    if (retryInterval == shift) {
+                        resolve();
+                    } else {
+                        reject("Retry attempt called with wrong retry interval: " + shift + ", must be: " + retryInterval);
+                    }
+                    drop();
+                }
+            });
+            mm.onFail(function(msg, reason, retry) {
+                reject("onFail handler called. Reason: " + reason);
+            });
+            mm.onTimeout(function(msg, wait, fail) {
+                fail();
+            });
+            mm.onReply(function(msg, response) {
+                reject("onReply handler called");
+            }.bindenv(this));
+            mm.send(MESSAGE_NAME, BASIC_MESSAGE);
+        }.bindenv(this));
+    }
 
     // autoRetry, maxAutoRetries
     function testAutoRetry() {
@@ -191,36 +190,35 @@ class ConstructorTestCase extends ImpTestCase {
     }
 
     // messageTimeout
-    // https://github.com/electricimp/MessageManager/issues/22
-    // function testMessageTimeout() {
-    //     return Promise(function(resolve, reject) {
-    //         local ts = 0;
-    //         local messageTimeout = MESSAGE_WITH_DELAY_SLEEP - 1;
-    //         local mm = MessageManager({
-    //             "firstMessageId":  msgId,
-    //             "nextIdGenerator": msgIdGenerator,
-    //             "messageTimeout":  messageTimeout
-    //         });
-    //         mm.beforeSend(function(msg, enqueue, drop) {
-    //             ts = time();
-    //         }.bindenv(this));
-    //         mm.onFail(function(msg, reason, retry) {
-    //             reject("onFail handler called. Reason: " + reason);
-    //         });
-    //         mm.onReply(function(msg, response) {
-    //             reject("onReply handler called");
-    //         }.bindenv(this));
-    //         mm.onTimeout(function(msg, wait, fail) {
-    //             try {
-    //                 local shift = time() - ts;
-    //                 assertDeepEqualWrap(messageTimeout, shift, "Wrong message timeout");
-    //                 resolve();
-    //             } catch (ex) {
-    //                 reject(ex);
-    //             }
-    //             fail();
-    //         }.bindenv(this));
-    //         mm.send(MESSAGE_WITH_DELAY, BASIC_MESSAGE);
-    //     }.bindenv(this));
-    // }
+    function testMessageTimeout() {
+        return Promise(function(resolve, reject) {
+            local ts = 0;
+            local messageTimeout = MESSAGE_WITH_DELAY_SLEEP - 1;
+            local mm = MessageManager({
+                "firstMessageId":  msgId,
+                "nextIdGenerator": msgIdGenerator,
+                "messageTimeout":  messageTimeout
+            });
+            mm.beforeSend(function(msg, enqueue, drop) {
+                ts = time();
+            }.bindenv(this));
+            mm.onFail(function(msg, reason, retry) {
+                reject("onFail handler called. Reason: " + reason);
+            });
+            mm.onReply(function(msg, response) {
+                reject("onReply handler called");
+            }.bindenv(this));
+            mm.onTimeout(function(msg, wait, fail) {
+                try {
+                    local shift = time() - ts;
+                    assertDeepEqualWrap(messageTimeout, shift, "Wrong message timeout");
+                    resolve();
+                } catch (ex) {
+                    reject(ex);
+                }
+                fail();
+            }.bindenv(this));
+            mm.send(MESSAGE_WITH_DELAY, BASIC_MESSAGE);
+        }.bindenv(this));
+    }
 }

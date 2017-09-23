@@ -583,7 +583,7 @@ class MessageManager {
         // Process timed out messages from the sent (waiting for ack) queue
         foreach (id, msg in _sentQueue) {
             local timeout = msg._timeout ? msg._timeout : _msgTimeout;
-            if (now - msg._sent > timeout) {
+            if (now - msg._sent >= timeout) {
                 local wait = function(duration = null) {
                     local delay = duration != null ? duration : timeout;
                     msg._timeout = now - msg._sent + delay;
@@ -742,13 +742,13 @@ class MessageManager {
                 function/*enqueue*/() {
                     _enqueue(msg)
                     send = false
-                },
+                }.bindenv(this),
                 function/*drop*/(silently = true, error = null) {
                     send = false
                     if (!silently) {
                         _callOnFail(msg, (error == null ? MM_ERR_USER_DROPPED_MESSAGE : error));
                     }
-                }
+                }.bindenv(this)
             )
         }
 
