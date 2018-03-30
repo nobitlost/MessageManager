@@ -102,6 +102,8 @@ mm.send("lights", true);   // Turn on the lights
 
 *handlers* is a table containing the message-local message event handlers:
 
+**Note**  Message-local handlers override the global ones. I.e. if a message-local handler is triggered, the global one, if set, is not executed.
+
 | Key | Description | Handler |
 | --- | ----------- | ------- |
 | *onAck* | Acknowledgement handler | [MessageManager.DataMessage.onAck](#mmanager_data_message_on_ack)  |
