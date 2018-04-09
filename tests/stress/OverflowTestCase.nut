@@ -33,7 +33,7 @@ class OverflowTestCase extends ImpTestCase {
     function setUp() {
         infoAboutSide();
     }
-    
+
     function testFullReply() {
         local total = 500;
         local max_rate = 500;
@@ -58,34 +58,38 @@ class OverflowTestCase extends ImpTestCase {
             local ts = 0;
 
             local check = function() {
-                local summ = fail + timeout + (ack + reply + replyFailed) / 2;
+                local summ = fail + timeout + (local_ack + local_reply + local_replyFailed) / 2;
                 if (summ >= total) {
                     try {
-                        assertDeepEqualWrap(0, fail, "fail");
-                        assertDeepEqualWrap(0, timeout, "timeout");
-                        assertDeepEqualWrap(0, replyFailed, "replyFailed");
-                        assertDeepEqualWrap(total, ack, "ack != total");
-                        assertDeepEqualWrap(total, reply + replyFailed, "reply != total");
+                        assertDeepEqualWrap(0, fail, "fail != 0");
+                        assertDeepEqualWrap(0, timeout, "timeout != 0");
+                        assertDeepEqualWrap(0, replyFailed, "replyFailed != 0");
+
+                        assertDeepEqualWrap(0, local_fail, "fail != 0");
+                        assertDeepEqualWrap(0, local_timeout, "timeout != 0");
+                        assertDeepEqualWrap(0, local_replyFailed, "replyFailed != 0");
+
+                        assertDeepEqualWrap(0, ack, "ack != 0");
+                        assertDeepEqualWrap(0, reply, "reply != 0");
+
+                        assertDeepEqualWrap(total, local_ack, "ack != total");
+                        assertDeepEqualWrap(total, local_reply + local_replyFailed, "reply != total");
                         assertDeepEqualWrap(total, summ, "summ != total");
-                        assertDeepEqualWrap(fail, local_fail, "fail != local_fail");
-                        assertDeepEqualWrap(timeout, local_timeout, "timeout != local_timeout");
-                        assertDeepEqualWrap(ack, local_ack, "ack != local_ack");
-                        assertDeepEqualWrap(reply, local_reply, "reply != local_reply");
                         assertDeepEqualWrap(total, beforeSend, "beforeSend != total");
                         assertDeepEqualWrap(0, beforeRetry, "beforeRetry");
                         info("Sent and received: " + total + " message(s). Time: " + (time() - ts) + " second(s)");
                         resolve();
                     } catch (ex) {
                         info("failed");
-                        info("fail " + fail + " | " + 
-                             "timeout " + timeout + " | " + 
-                             "ack " + ack + " | " + 
-                             "reply " + reply + " | " + 
+                        info("fail " + fail + " | " +
+                             "timeout " + timeout + " | " +
+                             "ack " + ack + " | " +
+                             "reply " + reply + " | " +
                              "replyFailed " + replyFailed);
-                        info("local_fail " + local_fail + " | " + 
-                             "local_timeout " + local_timeout + " | " + 
-                             "local_ack " + local_ack + " | " + 
-                             "local_reply " + local_reply + " | " + 
+                        info("local_fail " + local_fail + " | " +
+                             "local_timeout " + local_timeout + " | " +
+                             "local_ack " + local_ack + " | " +
+                             "local_reply " + local_reply + " | " +
                              "local_replyFailed " + local_replyFailed);
                         info("summ/total " + summ + "/" + total);
                         reject(ex);
@@ -113,7 +117,7 @@ class OverflowTestCase extends ImpTestCase {
                 ack++;
                 check();
             }.bindenv(this));
-            
+
             mm.onReply(function(msg, response) {
                 try {
                     assertDeepEqualWrap(BASIC_MESSAGE, response.data, ERR_REQ_RES_NOT_IDENTICAL);
@@ -174,7 +178,7 @@ class OverflowTestCase extends ImpTestCase {
             send(0);
         }.bindenv(this));
     }
-    
+
     function testDisconnectedDoesntSendMessages() {
         if (isAgentSide()) {
             info("ConnectionManager is a device-side only library, so we skip this test that running on the agent");
@@ -288,16 +292,16 @@ class OverflowTestCase extends ImpTestCase {
 
                     resolve();
                 } catch (ex) {
-                    info("fails " + _numOfFails + " | " + 
-                         "timeouts " + _numOfTimeouts + " | " + 
-                         "acks " + _numOfAcks + " | " + 
+                    info("fails " + _numOfFails + " | " +
+                         "timeouts " + _numOfTimeouts + " | " +
+                         "acks " + _numOfAcks + " | " +
                          "replies " + _numOfReplies);
-                    info("l_fails " + _numOfLocalFails + " | " + 
-                         "l_timeouts " + _numOfLocalTimeouts + " | " + 
-                         "l_acks " + _numOfLocalAcks + " | " + 
+                    info("l_fails " + _numOfLocalFails + " | " +
+                         "l_timeouts " + _numOfLocalTimeouts + " | " +
+                         "l_acks " + _numOfLocalAcks + " | " +
                          "l_replies " + _numOfLocalReplies);
-                    info("beforeRetries " + _numOfBeforeRetries + " | " + 
-                         "beforeSends " + _numOfBeforeSends + " | " + 
+                    info("beforeRetries " + _numOfBeforeRetries + " | " +
+                         "beforeSends " + _numOfBeforeSends + " | " +
                          "pending " + pending);
                     reject(ex);
                 }
