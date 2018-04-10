@@ -59,7 +59,7 @@ const MM_HANDLER_NAME_ON_TIMEOUT        = "onTimeout";
 
 class MessageManager {
 
-    static VERSION = "2.0.0";
+    static VERSION = "2.1.0";
 
     // Queue of messages that are pending for acknowledgement
     _sentQueue = null;
@@ -583,7 +583,7 @@ class MessageManager {
         // Process timed out messages from the sent (waiting for ack) queue
         foreach (id, msg in _sentQueue) {
             local timeout = msg._timeout ? msg._timeout : _msgTimeout;
-            if (now - msg._sent > timeout) {
+            if (now - msg._sent >= timeout) {
                 local wait = function(duration = null) {
                     local delay = duration != null ? duration : timeout;
                     msg._timeout = now - msg._sent + delay;
@@ -595,8 +595,11 @@ class MessageManager {
                 }.bindenv(this);
 
                 if (!msg._acked) {
-                    _isFunc(msg._onTimeout) && msg._onTimeout(msg, wait, fail);
-                    _isFunc(_onTimeout) && _onTimeout(msg, wait, fail);
+                    if (_isFunc(msg._onTimeout)) {
+                        msg._onTimeout(msg, wait, fail);
+                    } else if(_isFunc(_onTimeout)) {
+                        _onTimeout(msg, wait, fail);
+                    }
                 }
 
                 if (drop) {
@@ -742,13 +745,13 @@ class MessageManager {
                 function/*enqueue*/() {
                     _enqueue(msg)
                     send = false
-                },
+                }.bindenv(this),
                 function/*drop*/(silently = true, error = null) {
                     send = false
                     if (!silently) {
                         _callOnFail(msg, (error == null ? MM_ERR_USER_DROPPED_MESSAGE : error));
                     }
-                }
+                }.bindenv(this)
             )
         }
 
@@ -817,8 +820,11 @@ class MessageManager {
         if (id in _sentQueue) {
             local msg = _sentQueue[id];
 
-            _isFunc(msg._onAck) && msg._onAck(msg);
-            _isFunc(_onAck) && _onAck(msg);
+            if (_isFunc(msg._onAck)) {
+                msg._onAck(msg);
+            } else if (_isFunc(_onAck)) {
+                _onAck(msg);
+            }
 
             // Delete the acked message from the queue if there is no _onReply handler set (either global or message-specific)
             if (!_isFunc(msg._onReply) && !_isFunc(_onReply)) {
@@ -852,7 +858,7 @@ class MessageManager {
         }
 
         checkAndCall(msg._onFail);
-        checkAndCall(_onFail);
+        !hasHandler && checkAndCall(_onFail);
 
         if (!hasHandler) {
             // Error handler is not set. Let's check the autoretry.
@@ -887,12 +893,18 @@ class MessageManager {
             local msg = _sentQueue[id];
 
             // Make sure to call acknowledgement handlers first
-            _isFunc(msg._onAck) && msg._onAck(msg);
-            _isFunc(_onAck) && _onAck(msg);
+            if (_isFunc(msg._onAck)) {
+                msg._onAck(msg);
+            } else if (_isFunc(_onAck)) {
+                _onAck(msg);
+            }
 
             // Then call the global handlers
-            _isFunc(msg._onReply) && msg._onReply(msg, payload["data"]);
-            _isFunc(_onReply) && _onReply(msg, payload["data"]);
+            if (_isFunc(msg._onReply))  {
+                msg._onReply(msg, payload["data"]);
+            } else if (_isFunc(_onReply)) {
+                _onReply(msg, payload["data"]);
+            }
 
             delete _sentQueue[id];
         }
