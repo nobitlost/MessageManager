@@ -9,6 +9,5 @@
     "tests/**/*.test.nut"
   ],
   "deviceFile": "MessageManager.lib.nut",
-  "agentFile": "MessageManager.lib.nut",
-  "githubConfig": "github.conf"
+  "agentFile": "MessageManager.lib.nut"
 }
