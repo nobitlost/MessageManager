@@ -94,7 +94,7 @@ local mm = MessageManager(options);
 Sends a named message to the partner side and returns the [MessageManager.DataMessage](#mmanager_data_message) object
 created. The *data* parameter can be a basic Squirrel type (`1`, `true`, `"A String"`) or more complex data structures 
 such as an array or table, but it must be 
-[a serializable Squirrel value](https://electricimp.com/docs/resources/serialisablesquirrel/).
+[a serializable Squirrel value](https://developer.electricimp.com/resources/serialisablesquirrel/).
         
 ```squirrel
 mm.send("lights", true);   // Turn on the lights
