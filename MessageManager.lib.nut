@@ -790,7 +790,7 @@ class MessageManager {
         }
 
         // If message was not replied, send the ACK
-        if (!replied) {
+        if (handlerFound && !replied) {
             error = _partner.send(MM_MESSAGE_TYPE_ACK, {
                 "id" : payload["id"]
             });

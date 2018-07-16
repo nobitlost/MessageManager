@@ -34,7 +34,7 @@ class DestBasicTestCase extends BaseDestructive {
     function setUp() {
         infoAboutSide();
     }
-    
+
     function testSendWithNonSerializableMessage() {
         if (!isAgentSide()) {
             // Device Runtime Error: ERROR: skipped unserialisable data
@@ -128,7 +128,7 @@ class DestBasicTestCase extends BaseDestructive {
                     "nextIdGenerator": msgIdGenerator
                 });
                 try {
-                    mm.on(MESSAGE_DESTRUCTIVE_RESEND_RESPONSE, value);
+                    mm.on(MESSAGE_DESTRUCTIVE_RESEND_RESPONSE, function(message, reply) {});
                 } catch (ex) {
                     reject("Catch mm.on: " + ex);
                 }
