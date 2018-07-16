@@ -14,37 +14,37 @@ The library uses [ConnectionManager](https://github.com/electricimp/ConnectionMa
 
 - [MessageManager](#mmanager) &mdash; The core library. It is used to add/remove handlers, and to send messages
     - [MessageManager.send()](#mmanager_send) &mdash; Sends the data message
-    - [MessageManager.on()](#mmanager_on) &mdash; Sets the callback which will be called when 
+    - [MessageManager.on()](#mmanager_on) &mdash; Sets the callback which will be called when
     a message with the specified name is received
-    - [MessageManager.beforeSend()](#mmanager_before_send) &mdash; Sets the callback which will be called 
+    - [MessageManager.beforeSend()](#mmanager_before_send) &mdash; Sets the callback which will be called
     before a message is sent
-    - [MessageManager.beforeRetry()](#mmanager_before_retry) &mdash; Sets the callback which will be called 
+    - [MessageManager.beforeRetry()](#mmanager_before_retry) &mdash; Sets the callback which will be called
     before a message is retried
     - [MessageManager.onFail()](#mmanager_on_fail) &mdash; Sets the callback which will be called when an error occurs
-    - [MessageManager.onTimeout()](#mmanager_on_timeout) &mdash; Sets the callback which will be called when an message 
+    - [MessageManager.onTimeout()](#mmanager_on_timeout) &mdash; Sets the callback which will be called when an message
     times out
     - [MessageManager.onAck()](#mmanager_on_ack) &mdash; Sets the callback which will be called on the message acknowledgement
     - [MessageManager.onReply()](#mmanager_on_reply) &mdash; Sets the callback which will be called when a sent message receives a reply
-    - [MessageManager.getPendingCount](#mmanager_get_pending_count) &mdash; Returns the overall number of pending messages 
+    - [MessageManager.getPendingCount](#mmanager_get_pending_count) &mdash; Returns the overall number of pending messages
     (either waiting for acknowledgement or waiting in the retry queue)
-- [MessageManager.DataMessage](#mmanager_data_message) &mdash; The data message object, consisting of the payload 
+- [MessageManager.DataMessage](#mmanager_data_message) &mdash; The data message object, consisting of the payload
 to be send over the air and meta-information used to control the message lifecycle
-    - [MessageManager.DataMessage.onFail()](#mmanager_data_message_on_fail) &mdash; Sets the message-local 
+    - [MessageManager.DataMessage.onFail()](#mmanager_data_message_on_fail) &mdash; Sets the message-local
     handler to be called when an error occurs
-    - [MessageManager.DataMessage.onTimeout()](#mmanager_data_message_on_timeout) &mdash; Sets the message-local 
+    - [MessageManager.DataMessage.onTimeout()](#mmanager_data_message_on_timeout) &mdash; Sets the message-local
     handler to be called when a transmission times out
-    - [MessageManager.DataMessage.onAck()](#mmanager_data_message_on_ack) &mdash; Sets the message-local 
+    - [MessageManager.DataMessage.onAck()](#mmanager_data_message_on_ack) &mdash; Sets the message-local
     handler to be called when a sent message is acknowledged
     - [MessageManager.DataMessage.onReply()](#mmanager_data_message_on_reply) &mdash; Sets the message-local
     handler to be called when a sent message receives a reply
-    
+
 ## Details and Usage
 
 ### MessageManager
 
 <div id="mmanager"><h4>Constructor: MessageManager(<i>[options]</i>)</h4></div>
 
-Calling the MessageManager constructor creates a new MessageManager instance. An optional 
+Calling the MessageManager constructor creates a new MessageManager instance. An optional
 table can be passed into the constructor (as *options*) to override default behaviours. *options* can contain any of the following keys:
 
 | Key | Data Type | Default Value | Description |
@@ -92,10 +92,10 @@ local mm = MessageManager(options);
 <div id="mmanager_send"><h4>MessageManager.send(<i>name[, data][, handlers][, timeout][, metadata]</i>)</h4></div>
 
 Sends a named message to the partner side and returns the [MessageManager.DataMessage](#mmanager_data_message) object
-created. The *data* parameter can be a basic Squirrel type (`1`, `true`, `"A String"`) or more complex data structures 
-such as an array or table, but it must be 
+created. The *data* parameter can be a basic Squirrel type (`1`, `true`, `"A String"`) or more complex data structures
+such as an array or table, but it must be
 [a serializable Squirrel value](https://developer.electricimp.com/resources/serialisablesquirrel/).
-        
+
 ```squirrel
 mm.send("lights", true);   // Turn on the lights
 ```
@@ -110,7 +110,7 @@ mm.send("lights", true);   // Turn on the lights
 | *onFail*| Failure handler | [MessageManager.DataMessage.onFail](#mmanager_data_message_on_fail) |
 | *onReply*| Reply handler | [MessageManager.DataMessage.onReply](#mmanager_data_message_on_reply)  |
 | *onTimeout*| Timeout handler | [MessageManager.DataMessage.onTimeout](#mmanager_data_message_on_timeout)  |
-        
+
 <div id="mmanager_on"><h4>MessageManager.on(<i>messageName, callback</i>)</h4></div>
 
 Sets a message listener function (*callback*) for the specified *messageName*. The callback function takes two parameters: *message* (the message) and *reply* (a function that can be called to reply to the message).
@@ -141,7 +141,7 @@ mm.beforeSend(
         if (runningOutOfMemory()) {
             drop();
         }
-        
+
         if (needToPreserveMessageOrder() && previousMessagesFailed()) {
             enqueue();
         }
@@ -160,14 +160,14 @@ Sets the callback for retry operations. It will be called before the library att
 | *drop* | A function which disposes of the message. It takes two optional parameters: *silently*, which defaults to `true` and which governs whether the disposal takes place silently or through the *onFail* callbacks, and *error* which if *silently* is `false`, specifies the error message to be provided to the *onFail* callback |
 
 The *skip* and *drop* functions must be called synchronously, if they are called at all.
- 
+
 ```squirrel
 mm.beforeRetry(
     function(msg, skip, drop) {
         if (runningOutOfMemory()) {
             drop();
         }
-        
+
         if (needToWaitForSomeReasonBeforeRetry()) {
             skip(duration);
         }
@@ -205,7 +205,7 @@ Sets the callback to be called when a message timeout occurs. The callback has t
 | *fail* | A function which makes the message fall through the *onFail* callbacks |
 
 If neither *wait* nor *fail* are called, the message will expire.
- 
+
 ```squirrel
 mm.onTimeout(
     function(msg, wait, fail) {
@@ -252,6 +252,8 @@ mm.onReply(
     }
 )
 ```
+
+**NOTE:** setting the callback doesn't necessarily imply that the other side must reply to the message. It just sets a handler, which is executed when/if the message is replied.
 
 <div id="mmanager_get_pending_count"><h4>MessageManager.getPendingCount()</h4></div>
 
@@ -300,7 +302,7 @@ local cm = ConnectionManager({
     "stayConnected": true
 });
 
-// Set the recommended buffer size 
+// Set the recommended buffer size
 // (see https://github.com/electricimp/ConnectionManager for details)
 imp.setsendbuffersize(8096);
 
