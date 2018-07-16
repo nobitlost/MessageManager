@@ -6,7 +6,7 @@ MessageManager is framework for asynchronous bidirectional agent to device commu
 
 The library uses [ConnectionManager](https://github.com/electricimp/ConnectionManager) on the device side to receive notifications of connection and disconnection events, and to monitor connection status (ie. so that no attempt it made to send messages when the device is disconnected).
 
-**To add this library to your project, add** `#require "MessageManager.lib.nut:2.1.0"` **to the top of your agent and device code.**
+**To add this library to your project, add** `#require "MessageManager.lib.nut:2.2.0"` **to the top of your agent and device code.**
 
 **Note** MessageManager is designed to run over reliable (ie. TCP/TLS) connections. Retries only occur in the case of dropped connections or lost packets, or if called manually from [beforeSend()](#mmanager_before_send) or [beforeRetry()](#mmanager_before_retry).
 
@@ -236,6 +236,8 @@ mm.onAck(
 )
 ```
 
+**NOTE:** a message is only acked if the receiving party has a handler for this message defined.
+
 <div id="mmanager_on_reply"><h4>MessageManager.onReply(<i>handler</i>)</h4></div>
 
 Sets the callback to be called when the message is replied to. The callback has the following parameters:
@@ -295,7 +297,7 @@ Sets a message-local version of the [MessageManager.onReply()](#mmanager_on_repl
 // Device code
 
 #require "ConnectionManager.class.nut:1.0.2"
-#require "MessageManager.lib.nut:2.1.0"
+#require "MessageManager.lib.nut:2.2.0"
 
 local cm = ConnectionManager({
     "blinkupBehavior": ConnectionManager.BLINK_ALWAYS,
@@ -338,7 +340,7 @@ sendData();
 ```squirrel
 // Agent code
 
-#require "MessageManager.lib.nut:2.1.0"
+#require "MessageManager.lib.nut:2.2.0"
 
 local mm = MessageManager();
 
