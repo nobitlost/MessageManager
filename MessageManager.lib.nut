@@ -59,7 +59,7 @@ const MM_HANDLER_NAME_ON_TIMEOUT        = "onTimeout";
 
 class MessageManager {
 
-    static VERSION = "2.1.0";
+    static VERSION = "2.2.0";
 
     // Queue of messages that are pending for acknowledgement
     _sentQueue = null;
@@ -790,7 +790,7 @@ class MessageManager {
         }
 
         // If message was not replied, send the ACK
-        if (!replied) {
+        if (handlerFound && !replied) {
             error = _partner.send(MM_MESSAGE_TYPE_ACK, {
                 "id" : payload["id"]
             });
