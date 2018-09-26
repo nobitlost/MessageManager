@@ -276,19 +276,6 @@ class MessageManager {
     // Returns:             MessageManager object created
     function constructor(config = null) {
 
-        // This is a really dirty hack to address the "no handler" error.
-        // We just give the partner some time to register its message handlers.
-        // The "no handler" error is raised by the server when a message is sent between
-        // agent and device and there is no callback registered for
-        // the specified message name on the other side.
-        // We have to do this workaround, because unfortunately until impOS natively
-        // supports the "partner connected" notifications that don't raise errors,
-        // there is no other way to properly handle this.
-        // We understand that this is an ugly hacky way to implement things but it helps in
-        // most of cases that we are aware of. And this is definitely not the approach we
-        // recommend anyone to follow.
-        imp.sleep(MM_START_UP_DELAY);
-
         if (!config) {
             config = {}
         }
@@ -308,7 +295,20 @@ class MessageManager {
         _partner.on(MM_MESSAGE_TYPE_NACK, _onNackReceived.bindenv(this));
         _partner.on(MM_MESSAGE_TYPE_REPLY, _onReplyReceived.bindenv(this));
         _partner.on(MM_MESSAGE_TYPE_CONNECTED, _onConReceived.bindenv(this));
-        _partner.on(MM_MESSAGE_TYPE_CONNECTED_REPLY, _onConReplyReceived.bindenv(this))
+        _partner.on(MM_MESSAGE_TYPE_CONNECTED_REPLY, _onConReplyReceived.bindenv(this));
+        
+        // This is a really dirty hack to address the "no handler" error.
+        // We just give the partner some time to register its message handlers.
+        // The "no handler" error is raised by the server when a message is sent between
+        // agent and device and there is no callback registered for
+        // the specified message name on the other side.
+        // We have to do this workaround, because unfortunately until impOS natively
+        // supports the "partner connected" notifications that don't raise errors,
+        // there is no other way to properly handle this.
+        // We understand that this is an ugly hacky way to implement things but it helps in
+        // most of cases that we are aware of. And this is definitely not the approach we
+        // recommend anyone to follow.
+        imp.sleep(MM_START_UP_DELAY);        
 
         // Read configuration
         _cm              = "connectionManager"  in config ? config["connectionManager"]  : null;
