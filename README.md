@@ -15,7 +15,8 @@ The library uses [ConnectionManager](https://github.com/electricimp/ConnectionMa
 - [MessageManager](#mmanager) &mdash; The core library. It is used to add/remove handlers, and to send messages
     - [MessageManager.send()](#mmanager_send) &mdash; Sends the data message
     - [MessageManager.on()](#mmanager_on) &mdash; Sets the callback which will be called when
-    a message with the specified name is received
+    a message with the specified name is received. Or sets the generic callback which will be called when message without name-specific callback is recieved.
+    - [MessageManager.defaultOn()](#mmanager_defaulton) &mdash; Sets the generic callback which will be called when message without name-specific callback is recieved, as well as [MessageManager.on()](#mmanager_on) without specified message name.
     - [MessageManager.beforeSend()](#mmanager_before_send) &mdash; Sets the callback which will be called
     before a message is sent
     - [MessageManager.beforeRetry()](#mmanager_before_retry) &mdash; Sets the callback which will be called
@@ -71,7 +72,7 @@ local mm = MessageManager();
 ```squirrel
 // Create ConnectionManager instance
 local cm = ConnectionManager({
-    "blinkupBehavior": ConnectionManager.BLINK_ALWAYS,
+    "blinkupBehavior": CM_BLINK_ALWAYS,
     "stayConnected": true
 });
 imp.setsendbuffersize(8096);
@@ -113,12 +114,31 @@ mm.send("lights", true);   // Turn on the lights
 
 <div id="mmanager_on"><h4>MessageManager.on(<i>messageName, callback</i>)</h4></div>
 
-Sets a message listener function (*callback*) for the specified *messageName*. The callback function takes two parameters: *message* (the message) and *reply* (a function that can be called to reply to the message).
+Sets a message listener function (*callback*) for the specified *messageName* or for unhandled messages if *messageName* is null.
+ The callback function takes two parameters: *message* (the message) and *reply* (a function that can be called to reply to the message).
 
 ```squirrel
 // Get a message, and do something with it
 mm.on("lights", function(message, reply) {
     led.write(message.data);
+    reply("Got it!");
+});
+
+// Get unhandled messages, and do something with its
+mm.on(null, function(message, reply) {
+    log(message.data);
+    reply("Got it!");
+});
+```
+
+<div id="mmanager_defaulton"><h4>MessageManager.defaultOn(<i>callback</i>)</h4></div>
+
+Sets a message listener function (*callback*) for unhandled messages, as well as [MessageManager.on](#mmanager_on) with null value of *messageName* parameter. The callback function takes two parameters: *message* (the message) and *reply* (a function that can be called to reply to the message).
+
+```squirrel
+// Get unhandled messages, and do something with its
+mm.defaultOn(function(message, reply) {
+    log(message.data);
     reply("Got it!");
 });
 ```
@@ -296,11 +316,11 @@ Sets a message-local version of the [MessageManager.onReply()](#mmanager_on_repl
 ```squirrel
 // Device code
 
-#require "ConnectionManager.class.nut:1.0.2"
+#require "ConnectionManager.lib.nut:3.0.0"
 #require "MessageManager.lib.nut:2.2.1"
 
 local cm = ConnectionManager({
-    "blinkupBehavior": ConnectionManager.BLINK_ALWAYS,
+    "blinkupBehavior": CM_BLINK_ALWAYS,
     "stayConnected": true
 });
 
@@ -344,8 +364,8 @@ sendData();
 
 local mm = MessageManager();
 
-mm.on("name", function(data, reply) {
-    server.log("message received: " + data);
+mm.on("name", function(message, reply) {
+    server.log("message received: " + message.data);
     reply("Got it!");
 });
 ```

@@ -112,10 +112,13 @@ class MessageManager {
     // Max number of auto retries
     _maxAutoRetries = null;
 
-    // Handler to be called on a message received
+    // Name-specific handler to be called on a message received
     _on = null;
 
-    // Handler to be called right before a message is sent
+    // Generic handler to be called on a message received without name-specific handler.
+    _genericHandler = null;
+    
+     // Handler to be called right before a message is sent
     _beforeSend = null;
 
     // Handler to be called before the message is being retried
@@ -363,11 +366,11 @@ class MessageManager {
         return _send(msg);
     }
 
-    // Sets the handler, which will be called when a message with the specified
-    // name is received
+    // Sets the handler, which will be called when a message is received
     //
     // Parameters:
-    //      name            The name of the message to register the handler for
+    //      name            The name of the message to register the handler for,
+    //                      or null to register generic handler
     //      handler         The handler to be called. The handler's signature:
     //                          handler(message, reply), where
     //                              message         The message received
@@ -377,7 +380,29 @@ class MessageManager {
     //
     // Returns:             Nothing
     function on(name, handler) {
-        _on[name] <- handler;
+        if (name != null) {
+            // set name-specific handler
+            _on[name] <- handler;
+        } else {
+            // set generic handler
+            _genericHandler = handler;
+        }
+    }
+
+    // Sets the generic handler, which will be called when a message without name-specific
+    // handler is received
+    //
+    // Parameters:
+    //      handler         The handler to be called. The handler's signature:
+    //                          handler(message, reply), where
+    //                              message         The message received
+    //                              reply(data)     The function that can be used to reply
+    //                                              to the received message:
+    //                                              reply(data)
+    //
+    // Returns:             Nothing
+    function defaultOn(handler) {
+        on(null, handler);
     }
 
     // Sets the handler which will be called before a message is sent
@@ -772,32 +797,28 @@ class MessageManager {
         local name = payload["name"];
         local data = payload["data"];
         local replied = false;
-        local handlerFound = false;
         local error = 0;
 
-        if (name in _on) {
-            local handler = _on[name];
-            if (_isFunc(handler)) {
-                handlerFound = true;
-                handler(payload, function/*reply*/(data = null) {
-                    replied = true;
-                    error = _partner.send(MM_MESSAGE_TYPE_REPLY, {
-                        "id"   : payload["id"],
-                        "data" : data
-                    });
-                }.bindenv(this));
+        // Name-specific handler if exist and valid, otherwise generic handler 
+        local handler = name in _on && _isFunc(_on[name]) ? _on[name] : _genericHandler;
+                
+        if (_isFunc(handler)) {
+            handler(payload, function/*reply*/(data = null) {
+                replied = true;
+                error = _partner.send(MM_MESSAGE_TYPE_REPLY, {
+                    "id"   : payload["id"],
+                    "data" : data
+                });
+            }.bindenv(this));
+
+            // If message was not replied, send the ACK
+            if (!replied) {
+                error = _partner.send(MM_MESSAGE_TYPE_ACK, {
+                    "id" : payload["id"]
+                });
             }
-        }
-
-        // If message was not replied, send the ACK
-        if (handlerFound && !replied) {
-            error = _partner.send(MM_MESSAGE_TYPE_ACK, {
-                "id" : payload["id"]
-            });
-        }
-
-        // No valid handler - send NACK
-        if (!handlerFound) {
+        } else {
+            // No valid handler - send NACK
             error = _partner.send(MM_MESSAGE_TYPE_NACK, {
                 "id" : payload["id"]
             });
