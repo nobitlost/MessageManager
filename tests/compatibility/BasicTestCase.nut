@@ -58,7 +58,7 @@ class BasicTestCase extends ImpTestCase {
         }.bindenv(this));
     }
 
-	function testDefaultSend() {
+	function testSendDefault() {
         return Promise(function(resolve, reject) {
             local mm = MessageManager({
                 "firstMessageId":  msgId,
