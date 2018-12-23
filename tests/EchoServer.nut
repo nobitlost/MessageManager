@@ -43,6 +43,10 @@ mm.on(MESSAGE_NAME, function(message, reply) {
     reply(message);
 }.bindenv(this));
 
+mm.defaultOn(function(message, reply) {
+    reply(message);
+}.bindenv(this));
+
 mm.on(MESSAGE_WITHOUT_RESPONSE, function(message, reply) {
     // do nothing
 }.bindenv(this));
