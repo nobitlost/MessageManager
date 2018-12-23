@@ -112,11 +112,11 @@ class MessageManager {
     // Max number of auto retries
     _maxAutoRetries = null;
 
-    // Name-specific handler to be called on a message received
+    // Name-specific handlers to be called on a message received
     _on = null;
 
     // Generic handler to be called on a message received without name-specific handler.
-    _genericHandler = null;
+    _defaultOn = null;
     
      // Handler to be called right before a message is sent
     _beforeSend = null;
@@ -385,12 +385,11 @@ class MessageManager {
             _on[name] <- handler;
         } else {
             // set generic handler
-            _genericHandler = handler;
+            _defaultOn = handler;
         }
     }
 
-    // Sets the generic handler, which will be called when a message without name-specific
-    // handler is received
+    // Sets the specified default handler, to be called when a message doesn't match any of the name-specific handlers
     //
     // Parameters:
     //      handler         The handler to be called. The handler's signature:

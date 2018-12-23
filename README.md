@@ -14,9 +14,8 @@ The library uses [ConnectionManager](https://github.com/electricimp/ConnectionMa
 
 - [MessageManager](#mmanager) &mdash; The core library. It is used to add/remove handlers, and to send messages
     - [MessageManager.send()](#mmanager_send) &mdash; Sends the data message
-    - [MessageManager.on()](#mmanager_on) &mdash; Sets the callback which will be called when
-    a message with the specified name is received. Or sets the generic callback which will be called when message without name-specific callback is recieved.
-    - [MessageManager.defaultOn()](#mmanager_defaulton) &mdash; Sets the generic callback which will be called when message without name-specific callback is recieved, as well as [MessageManager.on()](#mmanager_on) without specified message name.
+    - [MessageManager.on()](#mmanager_on) &mdash; Sets the handler to be called when a message is received (name-specific or a generic one).
+    - [MessageManager.defaultOn()](#mmanager_defaulton) &mdash; Sets the generic handler, to be called when a message doesn't match any of the name-specific handlers.
     - [MessageManager.beforeSend()](#mmanager_before_send) &mdash; Sets the callback which will be called
     before a message is sent
     - [MessageManager.beforeRetry()](#mmanager_before_retry) &mdash; Sets the callback which will be called
@@ -114,17 +113,17 @@ mm.send("lights", true);   // Turn on the lights
 
 <div id="mmanager_on"><h4>MessageManager.on(<i>messageName, callback</i>)</h4></div>
 
-Sets a message listener function (*callback*) for the specified *messageName* or for unhandled messages if *messageName* is null.
- The callback function takes two parameters: *message* (the message) and *reply* (a function that can be called to reply to the message).
+If the `messageName` argument is not `null`, sets the name-specific message handler. Otherwise sets the generic message handler. The generic message handler captures any messages not handled by any of the name-specific callbacks.
+The callback function takes two parameters: *message* (the message) and *reply* (a function that can be called to reply to the message).
 
 ```squirrel
-// Get a message, and do something with it
+//Set a name-specific message handler
 mm.on("lights", function(message, reply) {
     led.write(message.data);
     reply("Got it!");
 });
 
-// Get unhandled messages, and do something with its
+// Set a generic message handler
 mm.on(null, function(message, reply) {
     log(message.data);
     reply("Got it!");
@@ -133,10 +132,10 @@ mm.on(null, function(message, reply) {
 
 <div id="mmanager_defaulton"><h4>MessageManager.defaultOn(<i>callback</i>)</h4></div>
 
-Sets a message listener function (*callback*) for unhandled messages, as well as [MessageManager.on](#mmanager_on) with null value of *messageName* parameter. The callback function takes two parameters: *message* (the message) and *reply* (a function that can be called to reply to the message).
+Sets a handler which is called only for those messages that are not matched and handled by any name-specific callbacks set via [MessageManager.on](#mmanager_on). The callback function takes two parameters: *message* (the message) and *reply* (a function that can be called to reply to the message).
 
 ```squirrel
-// Get unhandled messages, and do something with its
+// Set a generic message handler
 mm.defaultOn(function(message, reply) {
     log(message.data);
     reply("Got it!");
