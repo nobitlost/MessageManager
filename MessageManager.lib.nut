@@ -799,7 +799,7 @@ class MessageManager {
         local error = 0;
 
         // Name-specific handler if exist and valid, otherwise generic handler 
-        local handler = name in _on && _isFunc(_on[name]) ? _on[name] : _genericHandler;
+        local handler = name in _on && _isFunc(_on[name]) ? _on[name] : _defaultOn;
                 
         if (_isFunc(handler)) {
             handler(payload, function/*reply*/(data = null) {
