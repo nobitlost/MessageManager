@@ -24,51 +24,10 @@
 // "Promise" symbol is injected dependency from ImpUnit_Promise module,
 // while class being tested can be accessed from global scope as "::Promise".
 
-@include __PATH__+"/Base.nut"
+@include __PATH__+"/EchoServer.nut"
 
-// EchoServer
-// This file should be included into agent or device code file, depending on witch one will be echo server (will respond with received message)
+// Extended EchoServer with generic handler 
 
-local params = {};
-if (!isAgentSide()) {
-    params["connectionManager"] <- getConnectionManager();
-}
-params["onPartnerConnected"] <- function(reply) {
-    reply(REPLY_NO_MESSAGES);
-}.bindenv(this);
-
-local mm = MessageManager(params);
-
-mm.on(MESSAGE_NAME, function(message, reply) {
+mm.defaultOn(function(message, reply) {
     reply(message);
-}.bindenv(this));
-
-mm.on(MESSAGE_WITHOUT_RESPONSE, function(message, reply) {
-    // do nothing
-}.bindenv(this));
-
-mm.on(MESSAGE_WITH_DELAY, function(message, reply) {
-    imp.sleep(MESSAGE_WITH_DELAY_SLEEP);
-    reply(message);
-}.bindenv(this));
-
-mm.on(MESSAGE_WITH_LONG_DELAY, function(message, reply) {
-    imp.sleep(MESSAGE_WITH_DELAY_LONG_SLEEP);
-    reply(message);
-}.bindenv(this));
-
-mm.on(MESSAGE_WITH_SHORT_DELAY, function(message, reply) {
-    imp.sleep(MESSAGE_WITH_DELAY_SHORT_SLEEP);
-    reply(message);
-}.bindenv(this));
-
-mm.on(MESSAGE_DESTRUCTIVE_RESEND, function(message, reply) {
-    try {
-        mm.onAck(function(msg) {
-            reply("OK");
-        }.bindenv(this));
-        mm.send(MESSAGE_DESTRUCTIVE_RESEND_RESPONSE, message);
-    } catch (ex) {
-        reply(ex);
-    }
 }.bindenv(this));
