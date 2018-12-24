@@ -798,7 +798,7 @@ class MessageManager {
         local replied = false;
         local error = 0;
 
-        // Name-specific handler if exist and valid, otherwise generic handler 
+        // Name-specific handler if exists and valid, otherwise - generic 
         local handler = name in _on && _isFunc(_on[name]) ? _on[name] : _defaultOn;
                 
         if (_isFunc(handler)) {
