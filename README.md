@@ -117,7 +117,7 @@ If the `messageName` argument is not `null`, sets the name-specific message hand
 The callback function takes two parameters: *message* (the message) and *reply* (a function that can be called to reply to the message).
 
 ```squirrel
-//Set a name-specific message handler
+// Set a name-specific message handler
 mm.on("lights", function(message, reply) {
     led.write(message.data);
     reply("Got it!");
