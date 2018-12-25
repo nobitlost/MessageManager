@@ -28,6 +28,7 @@
 @include __PATH__+"/conf.nut"
 
 const MESSAGE_NAME = "test";
+const MESSAGE_DEFAULT = "test_default";
 const MESSAGE_WITHOUT_RESPONSE = "test_no_response";
 const MESSAGE_WITH_DELAY = "test_with_delay";
 const MESSAGE_WITH_LONG_DELAY = "test_with_huge_delay";
@@ -36,8 +37,10 @@ const MESSAGE_WITH_NO_HANDLER = "test_with_no_handler";
 const MESSAGE_DESTRUCTIVE_RESEND = "test_destructive_resend";
 const MESSAGE_DESTRUCTIVE_RESEND_RESPONSE = "test_destructive_resend_response";
 
+
 const REPLY_NO_MESSAGES = "No messages";
 const BASIC_MESSAGE = "basic message";
+const DEFAULT_MESSAGE = "default message";
 
 const MESSAGE_WITH_DELAY_SLEEP = 2;
 const MESSAGE_WITH_DELAY_LONG_SLEEP = 8;

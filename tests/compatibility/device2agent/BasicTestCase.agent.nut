@@ -24,4 +24,4 @@
 // "Promise" symbol is injected dependency from ImpUnit_Promise module,
 // while class being tested can be accessed from global scope as "::Promise".
 
-@include __PATH__+"/../../EchoServer.nut"
+@include __PATH__+"/../../EchoServerEx.nut"

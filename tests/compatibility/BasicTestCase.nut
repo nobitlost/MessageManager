@@ -58,6 +58,30 @@ class BasicTestCase extends ImpTestCase {
         }.bindenv(this));
     }
 
+    function testSendDefault() {
+        return Promise(function(resolve, reject) {
+            local mm = MessageManager({
+                "firstMessageId":  msgId,
+                "nextIdGenerator": msgIdGenerator
+            });
+            mm.onReply(function(msg, response) {
+                try {
+                    assertDeepEqualWrap(DEFAULT_MESSAGE, response.data, ERR_REQ_RES_NOT_IDENTICAL);
+                    resolve();
+                } catch (ex) {
+                    reject(ex);
+                }
+            }.bindenv(this));
+            mm.onFail(function(msg, reason, retry) {
+                reject("onFail handler called. Reason: " + reason);
+            });
+            mm.onTimeout(function(msg, wait, fail) {
+                fail();
+            });
+            mm.send(MESSAGE_DEFAULT, DEFAULT_MESSAGE);
+        }.bindenv(this));
+    }
+
     function testSendExtended() {
         return Promise(function(resolve, reject) {
             local mm = MessageManager({
