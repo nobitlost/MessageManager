@@ -24,4 +24,10 @@
 // "Promise" symbol is injected dependency from ImpUnit_Promise module,
 // while class being tested can be accessed from global scope as "::Promise".
 
-@include __PATH__+"/../../EchoServerEx.nut"
+@include __PATH__+"/EchoServer.nut"
+
+// Extended EchoServer with generic handler 
+
+mm.defaultOn(function(message, reply) {
+    reply(message);
+}.bindenv(this));

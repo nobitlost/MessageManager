@@ -6,7 +6,7 @@ MessageManager is framework for asynchronous bidirectional agent to device commu
 
 The library uses [ConnectionManager](https://github.com/electricimp/ConnectionManager) on the device side to receive notifications of connection and disconnection events, and to monitor connection status (ie. so that no attempt it made to send messages when the device is disconnected).
 
-**To add this library to your project, add** `#require "MessageManager.lib.nut:2.2.1"` **to the top of your agent and device code.**
+**To add this library to your project, add** `#require "MessageManager.lib.nut:2.3.0"` **to the top of your agent and device code.**
 
 **Note** MessageManager is designed to run over reliable (ie. TCP/TLS) connections. Retries only occur in the case of dropped connections or lost packets, or if called manually from [beforeSend()](#mmanager_before_send) or [beforeRetry()](#mmanager_before_retry).
 
@@ -14,8 +14,8 @@ The library uses [ConnectionManager](https://github.com/electricimp/ConnectionMa
 
 - [MessageManager](#mmanager) &mdash; The core library. It is used to add/remove handlers, and to send messages
     - [MessageManager.send()](#mmanager_send) &mdash; Sends the data message
-    - [MessageManager.on()](#mmanager_on) &mdash; Sets the callback which will be called when
-    a message with the specified name is received
+    - [MessageManager.on()](#mmanager_on) &mdash; Sets the handler to be called when a message is received (name-specific or a generic one).
+    - [MessageManager.defaultOn()](#mmanager_defaulton) &mdash; Sets the generic handler, to be called when a message doesn't match any of the name-specific handlers.
     - [MessageManager.beforeSend()](#mmanager_before_send) &mdash; Sets the callback which will be called
     before a message is sent
     - [MessageManager.beforeRetry()](#mmanager_before_retry) &mdash; Sets the callback which will be called
@@ -71,7 +71,7 @@ local mm = MessageManager();
 ```squirrel
 // Create ConnectionManager instance
 local cm = ConnectionManager({
-    "blinkupBehavior": ConnectionManager.BLINK_ALWAYS,
+    "blinkupBehavior": CM_BLINK_ALWAYS,
     "stayConnected": true
 });
 imp.setsendbuffersize(8096);
@@ -113,12 +113,31 @@ mm.send("lights", true);   // Turn on the lights
 
 <div id="mmanager_on"><h4>MessageManager.on(<i>messageName, callback</i>)</h4></div>
 
-Sets a message listener function (*callback*) for the specified *messageName*. The callback function takes two parameters: *message* (the message) and *reply* (a function that can be called to reply to the message).
+If the `messageName` argument is not `null`, sets the name-specific message handler. Otherwise sets the generic message handler. The generic message handler captures any messages not handled by any of the name-specific callbacks.
+The callback function takes two parameters: *message* (the message) and *reply* (a function that can be called to reply to the message).
 
 ```squirrel
-// Get a message, and do something with it
+// Set a name-specific message handler
 mm.on("lights", function(message, reply) {
     led.write(message.data);
+    reply("Got it!");
+});
+
+// Set a generic message handler
+mm.on(null, function(message, reply) {
+    log(message.data);
+    reply("Got it!");
+});
+```
+
+<div id="mmanager_defaulton"><h4>MessageManager.defaultOn(<i>callback</i>)</h4></div>
+
+Sets a handler which is called only for those messages that are not matched and handled by any name-specific callbacks set via [MessageManager.on](#mmanager_on). The callback function takes two parameters: *message* (the message) and *reply* (a function that can be called to reply to the message).
+
+```squirrel
+// Set a generic message handler
+mm.defaultOn(function(message, reply) {
+    log(message.data);
     reply("Got it!");
 });
 ```
@@ -296,11 +315,11 @@ Sets a message-local version of the [MessageManager.onReply()](#mmanager_on_repl
 ```squirrel
 // Device code
 
-#require "ConnectionManager.class.nut:1.0.2"
-#require "MessageManager.lib.nut:2.2.1"
+#require "ConnectionManager.lib.nut:3.0.0"
+#require "MessageManager.lib.nut:2.3.0"
 
 local cm = ConnectionManager({
-    "blinkupBehavior": ConnectionManager.BLINK_ALWAYS,
+    "blinkupBehavior": CM_BLINK_ALWAYS,
     "stayConnected": true
 });
 
@@ -340,12 +359,12 @@ sendData();
 ```squirrel
 // Agent code
 
-#require "MessageManager.lib.nut:2.2.1"
+#require "MessageManager.lib.nut:2.3.0"
 
 local mm = MessageManager();
 
-mm.on("name", function(data, reply) {
-    server.log("message received: " + data);
+mm.on("name", function(message, reply) {
+    server.log("message received: " + message.data);
     reply("Got it!");
 });
 ```
