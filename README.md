@@ -1,4 +1,4 @@
-# MessageManager
+# MessageManager 2.3.0 #
 
 [![Build Status](https://api.travis-ci.org/electricimp/MessageManager.svg?branch=master)](https://travis-ci.org/electricimp/MessageManager)
 
