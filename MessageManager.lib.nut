@@ -330,7 +330,7 @@ class MessageManager {
         _nextId          = "firstMessageId"     in config ? config["firstMessageId"]     : MM_DEFAULT_FIRST_MESSAGE_ID;
 
         if (_cm) {
-            local cmVersion = _cm.VERSION.split('.');
+            local cmVersion = split(_cm.VERSION, '.');
             if (cmVersion[0].tointeger() < 3 || cmVersion[1].tointeger() < 1) {
                 throw "MessageManager requires ConnectionManager version to be not less than v3.1.0";
             }
