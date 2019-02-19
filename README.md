@@ -6,7 +6,7 @@ MessageManager is framework for asynchronous bidirectional agent to device commu
 
 The library uses [ConnectionManager](https://github.com/electricimp/ConnectionManager) on the device side to receive notifications of connection and disconnection events, and to monitor connection status (ie. so that no attempt it made to send messages when the device is disconnected).
 
-**To include this library in your project, add** `#require "MessageManager.lib.nut:2.4.0"` **to the top of your agent and device code.**
+**To include this library in your project, add** `#require "MessageManager.lib.nut:2.4.0"` **at the top of your agent and device code.**
 
 **Note** MessageManager is designed to run over reliable (ie. TCP/TLS) connections. Retries only occur in the case of dropped connections or lost packets, or if called manually from [*beforeSend()*](#mmanager_before_send) or [*beforeRetry()*](#mmanager_before_retry).
 
