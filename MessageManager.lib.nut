@@ -59,7 +59,7 @@ const MM_HANDLER_NAME_ON_TIMEOUT        = "onTimeout";
 
 class MessageManager {
 
-    static VERSION = "2.3.0";
+    static VERSION = "2.4.0";
 
     // Queue of messages that are pending for acknowledgement
     _sentQueue = null;
@@ -329,12 +329,6 @@ class MessageManager {
         if (_cm) {
             _cm.onConnect(_onConnect.bindenv(this));
             _cm.onDisconnect(_onDisconnect.bindenv(this));
-
-            // On device side make sure we are connected and the
-            // onConnect callback is triggered to notify the agent
-            if (!_isAgent()) {
-                _cm.connect();
-            }
         }
     }
 
