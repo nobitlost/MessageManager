@@ -57,9 +57,12 @@ const MM_HANDLER_NAME_ON_FAIL           = "onFail";
 const MM_HANDLER_NAME_ON_REPLY          = "onReply";
 const MM_HANDLER_NAME_ON_TIMEOUT        = "onTimeout";
 
+// ConnectionManager handler ids
+const MM_CM_HANDLERS_ID                 = "mmConnectionHandlers";
+
 class MessageManager {
 
-    static VERSION = "2.3.0";
+    static VERSION = "2.4.0";
 
     // Queue of messages that are pending for acknowledgement
     _sentQueue = null;
@@ -327,14 +330,12 @@ class MessageManager {
         _nextId          = "firstMessageId"     in config ? config["firstMessageId"]     : MM_DEFAULT_FIRST_MESSAGE_ID;
 
         if (_cm) {
-            _cm.onConnect(_onConnect.bindenv(this));
-            _cm.onDisconnect(_onDisconnect.bindenv(this));
-
-            // On device side make sure we are connected and the
-            // onConnect callback is triggered to notify the agent
-            if (!_isAgent()) {
-                _cm.connect();
+            local cmVersion = split(_cm.VERSION, ".");
+            if (cmVersion[0].tointeger() < 3 || cmVersion[1].tointeger() < 1) {
+                throw "MessageManager requires ConnectionManager version to be not less than v3.1.0";
             }
+            _cm.onConnect(_onConnect.bindenv(this), MM_CM_HANDLERS_ID);
+            _cm.onDisconnect(_onDisconnect.bindenv(this), MM_CM_HANDLERS_ID);
         }
     }
 

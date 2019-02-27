@@ -1,21 +1,22 @@
-# MessageManager
+# MessageManager 2.4.0 #
 
 [![Build Status](https://api.travis-ci.org/electricimp/MessageManager.svg?branch=master)](https://travis-ci.org/electricimp/MessageManager)
 
-MessageManager is framework for asynchronous bidirectional agent to device communication. The library is the successor to [Bullwinkle](https://github.com/electricimp/Bullwinkle).
+MessageManager is framework for asynchronous bidirectional agent to device communication. It is the successor to [Bullwinkle](https://github.com/electricimp/Bullwinkle).
 
 The library uses [ConnectionManager](https://github.com/electricimp/ConnectionManager) on the device side to receive notifications of connection and disconnection events, and to monitor connection status (ie. so that no attempt it made to send messages when the device is disconnected).
 
-**To add this library to your project, add** `#require "MessageManager.lib.nut:2.3.0"` **to the top of your agent and device code.**
+**To include this library in your project, add** `#require "MessageManager.lib.nut:2.4.0"` **at the top of your agent and device code.**
 
-**Note** MessageManager is designed to run over reliable (ie. TCP/TLS) connections. Retries only occur in the case of dropped connections or lost packets, or if called manually from [beforeSend()](#mmanager_before_send) or [beforeRetry()](#mmanager_before_retry).
+**Note** MessageManager is designed to run over reliable (ie. TCP/TLS) connections. Retries only occur in the case of dropped connections or lost packets, or if called manually from [*beforeSend()*](#mmanager_before_send) or [*beforeRetry()*](#mmanager_before_retry).
 
-## API Overview
+## API Overview ##
 
-- [MessageManager](#mmanager) &mdash; The core library. It is used to add/remove handlers, and to send messages
+- [MessageManager](#mmanager) &mdash; The core library. It is used to add/remove message callbacks, and to send messages
     - [MessageManager.send()](#mmanager_send) &mdash; Sends the data message
-    - [MessageManager.on()](#mmanager_on) &mdash; Sets the handler to be called when a message is received (name-specific or a generic one).
-    - [MessageManager.defaultOn()](#mmanager_defaulton) &mdash; Sets the generic handler, to be called when a message doesn't match any of the name-specific handlers.
+    - [MessageManager.on()](#mmanager_on) &mdash; Sets the callback which will be executed when
+    a message with the specified name is received (name-specific or generic)
+    - [MessageManager.defaultOn()](#mmanager_defaulton) &mdash; Sets the generic callback, which will be executed when a message doesn’t match any of the name-specific callbacks
     - [MessageManager.beforeSend()](#mmanager_before_send) &mdash; Sets the callback which will be called
     before a message is sent
     - [MessageManager.beforeRetry()](#mmanager_before_retry) &mdash; Sets the callback which will be called
@@ -30,19 +31,17 @@ The library uses [ConnectionManager](https://github.com/electricimp/ConnectionMa
 - [MessageManager.DataMessage](#mmanager_data_message) &mdash; The data message object, consisting of the payload
 to be send over the air and meta-information used to control the message lifecycle
     - [MessageManager.DataMessage.onFail()](#mmanager_data_message_on_fail) &mdash; Sets the message-local
-    handler to be called when an error occurs
+    callback to be executed when an error occurs
     - [MessageManager.DataMessage.onTimeout()](#mmanager_data_message_on_timeout) &mdash; Sets the message-local
-    handler to be called when a transmission times out
+    callback to be executed when a transmission times out
     - [MessageManager.DataMessage.onAck()](#mmanager_data_message_on_ack) &mdash; Sets the message-local
-    handler to be called when a sent message is acknowledged
+    callback to be executed when a sent message is acknowledged
     - [MessageManager.DataMessage.onReply()](#mmanager_data_message_on_reply) &mdash; Sets the message-local
-    handler to be called when a sent message receives a reply
+    callback to be executed when a sent message receives a reply
 
-## Details and Usage
+## MessageManager Usage ##
 
-### MessageManager
-
-<div id="mmanager"><h4>Constructor: MessageManager(<i>[options]</i>)</h4></div>
+<div id="mmanager"><h3>Constructor: MessageManager(<i>[options]</i>)</h3></div>
 
 Calling the MessageManager constructor creates a new MessageManager instance. An optional
 table can be passed into the constructor (as *options*) to override default behaviours. *options* can contain any of the following keys:
@@ -53,15 +52,15 @@ table can be passed into the constructor (as *options*) to override default beha
 | *retryInterval* | Integer | 0 | Changes the default timeout parameter passed to the [retry](#mmanager_retry) method |
 | *messageTimeout* | Integer | 10 | Changes the default timeout required before a message is considered failed (to be acknowledged or replied to) |
 | *autoRetry* | Boolean | `false` | If set to `true`, MessageManager will automatically continue to retry sending a message until *maxAutoRetries* has been reached when no [onFail()](#mmanager_on_fail) callback is supplied. Please note that if *maxAutoRetries* is set to 0, *autoRetry* will have no limit to the number of times it will retry |
-| *maxAutoRetries* | Integer | 0 | Changes the default number of automatic retries to be peformed by the library. After this number is reached the message will be dropped. Please note that the message will automatically be retried if there is no [onFail()](#mmanager_on_fail) handler registered by the user |
-| *connectionManager* | [ConnectionManager](https://github.com/electricimp/ConnectionManager) | `null` | Optional instance of the [ConnectionManager](https://github.com/electricimp/ConnectionManager) library that helps MessageManager to track the connectivity status |
+| *maxAutoRetries* | Integer | 0 | Changes the default number of automatic retries to be performed by the library. After this number is reached the message will be dropped. Please note that the message will automatically be retried if there is no [onFail()](#mmanager_on_fail) callback registered by the user |
+| *connectionManager* | [ConnectionManager](https://github.com/electricimp/ConnectionManager) | `null` | Optional instance of the [ConnectionManager](https://github.com/electricimp/ConnectionManager) library that helps MessageManager track connectivity status |
 | *nextIdGenerator* | Function | `null` | User-defined callback that generates the next message ID. The function has no parameters |
-| *onPartnerConnected* | Function | `null` | Sets the handler to be called when the partner is known to be connected. The handler’s signature is: *handler(reply)*, where *reply(data)* is the callback to respond to the “connected” event |
-| *onConnectedReply* | Function | `null` | Sets the handler to be called when the partner responds to the connected status. The handler’s signature is: *handler(response)*, where *response* is the response data |
-| *maxMessageRate* | Integer | 10 | Maximum message send rate, which defines the maximum number of messages the library  allows to send per second. If application exceeds the limit, the *onFail* handler is called.<br/>**Note** please don’t change the value unless absolutely necessary. |
+| *onPartnerConnected* | Function | `null` | Sets the callback to be triggered when the partner is known to be connected. The callback’s signature is: *callbackName(reply)*, where *reply(data)* is a callback to respond to the “connected” event |
+| *onConnectedReply* | Function | `null` | Sets the callback to be triggered when the partner responds to the connected status. The callback’s signature is: *callbackName(response)*, where *response* is the response data |
+| *maxMessageRate* | Integer | 10 | Maximum message send rate, which defines the maximum number of messages the library allows to send per second. If the application exceeds the limit, the *onFail* callback is triggered.<br />**Note** please don’t change the value unless absolutely necessary |
 | *firstMessageId* | Integer | 0 | Initial value for the auto-incrementing message ID |
 
-##### Examples
+#### Examples ####
 
 ```squirrel
 // Initialize using default settings
@@ -74,6 +73,7 @@ local cm = ConnectionManager({
     "blinkupBehavior": CM_BLINK_ALWAYS,
     "stayConnected": true
 });
+
 imp.setsendbuffersize(8096);
 
 // MessageManager options
@@ -89,62 +89,62 @@ local options = {
 local mm = MessageManager(options);
 ```
 
-<div id="mmanager_send"><h4>MessageManager.send(<i>name[, data][, handlers][, timeout][, metadata]</i>)</h4></div>
+<div id="mmanager_send"><h3>MessageManager.send(<i>name[, data][, callbacks][, timeout][, metadata]</i>)</h3></div>
 
-Sends a named message to the partner side and returns the [MessageManager.DataMessage](#mmanager_data_message) object
-created. The *data* parameter can be a basic Squirrel type (`1`, `true`, `"A String"`) or more complex data structures
-such as an array or table, but it must be
-[a serializable Squirrel value](https://developer.electricimp.com/resources/serialisablesquirrel/).
+This method sends a named message to the partner side and returns the [MessageManager.DataMessage](#mmanager_data_message) object created. The *data* parameter can be a basic Squirrel type (`1`, `true`, `"A String"`) or more complex data structures such as an array or table, but it must be [a serializable Squirrel value](https://developer.electricimp.com/resources/serialisablesquirrel/).
 
 ```squirrel
 mm.send("lights", true);   // Turn on the lights
 ```
 
-*handlers* is a table containing the message-local message event handlers:
+*callbacks* is a table containing the local message event callback functions. The library uses the key name to determine which callback-registration method to use. For example, if the table contains the key *onAck*, the key’s value (which should be a function) will be passed into *MessageManager.DataMessage.onAck()* in order to register it as the acknowledgement callback.
 
-**Note**  Message-local handlers override the global ones. I.e. if a message-local handler is triggered, the global one, if set, is not executed.
+| Key | Registration Method | Description | 
+| --- | --- | --- |
+| *onAck* | [MessageManager.DataMessage.onAck](#mmanager_data_message_on_ack) | Acknowledgement |
+| *onFail*| [MessageManager.DataMessage.onFail](#mmanager_data_message_on_fail) | Failure |
+| *onReply*| [MessageManager.DataMessage.onReply](#mmanager_data_message_on_reply) | Reply | 
+| *onTimeout*| [MessageManager.DataMessage.onTimeout](#mmanager_data_message_on_timeout) | Timeout |
 
-| Key | Description | Handler |
-| --- | ----------- | ------- |
-| *onAck* | Acknowledgement handler | [MessageManager.DataMessage.onAck](#mmanager_data_message_on_ack)  |
-| *onFail*| Failure handler | [MessageManager.DataMessage.onFail](#mmanager_data_message_on_fail) |
-| *onReply*| Reply handler | [MessageManager.DataMessage.onReply](#mmanager_data_message_on_reply)  |
-| *onTimeout*| Timeout handler | [MessageManager.DataMessage.onTimeout](#mmanager_data_message_on_timeout)  |
+**Note**  Message-local callbacks override the global ones, ie. if a message-local callback is triggered, the global one, if set, will not be executed.
 
 <div id="mmanager_on"><h4>MessageManager.on(<i>messageName, callback</i>)</h4></div>
 
-If the `messageName` argument is not `null`, sets the name-specific message handler. Otherwise sets the generic message handler. The generic message handler captures any messages not handled by any of the name-specific callbacks.
-The callback function takes two parameters: *message* (the message) and *reply* (a function that can be called to reply to the message).
+If the *messageName* parameter’s argument is not `null`, this method sets the name-specific message callback. Otherwise it uses the generic message callback. The generic message callback captures any messages not handled by any name-specific callback. The callback function takes two parameters: *message* (the message) and *reply* (a function that can be called to reply to the message).
+
+#### Example ####
 
 ```squirrel
-// Set a name-specific message handler
+// Set a name-specific message callback
 mm.on("lights", function(message, reply) {
     led.write(message.data);
     reply("Got it!");
 });
 
-// Set a generic message handler
+// Set a generic message callback
 mm.on(null, function(message, reply) {
     log(message.data);
     reply("Got it!");
 });
 ```
 
-<div id="mmanager_defaulton"><h4>MessageManager.defaultOn(<i>callback</i>)</h4></div>
+<div id="mmanager_defaulton"><h3>MessageManager.defaultOn(<i>callback</i>)</h3></div>
 
-Sets a handler which is called only for those messages that are not matched and handled by any name-specific callbacks set via [MessageManager.on](#mmanager_on). The callback function takes two parameters: *message* (the message) and *reply* (a function that can be called to reply to the message).
+This method sets a callback which is executed only for those messages that are not matched and handled by any name-specific callbacks set via [MessageManager.on](#mmanager_on). The callback function takes two parameters: *message* (the message) and *reply* (a function that can be called to reply to the message).
+
+#### Example ####
 
 ```squirrel
-// Set a generic message handler
+// Set a generic message callback
 mm.defaultOn(function(message, reply) {
     log(message.data);
     reply("Got it!");
 });
 ```
 
-<div id="mmanager_before_send"><h4>MessageManager.beforeSend(<i>callback</i>)</h4></div>
+<div id="mmanager_before_send"><h3>MessageManager.beforeSend(<i>callback</i>)</h3></div>
 
-Sets the callback which will be called *before* a message is sent. The callback has the following parameters:
+This method sets the callback which will be called *before* a message is sent. The callback has the following parameters:
 
 | Parameter | Description |
 | --- | --- |
@@ -153,6 +153,8 @@ Sets the callback which will be called *before* a message is sent. The callback 
 | *drop* | A function which disposes of the message. It takes two optional parameters: *silently*, which defaults to `true` and which governs whether the disposal takes place silently or through the *onFail* callbacks, and *error* which if *silently* is `false`, specifies the error message to be provided to the *onFail* callback |
 
 The *enqueue* and *drop* functions must be called synchronously, if they are called at all.
+
+#### Example ####
 
 ```squirrel
 mm.beforeSend(
@@ -165,12 +167,12 @@ mm.beforeSend(
             enqueue();
         }
     }
-)
+);
 ```
 
-<div id="mmanager_before_retry"><h4>MessageManager.beforeRetry(<i>callback</i>)</h4></div>
+<div id="mmanager_before_retry"><h3>MessageManager.beforeRetry(<i>callback</i>)</h3></div>
 
-Sets the callback for retry operations. It will be called before the library attempts to re-send the message and has the following parameters:
+This method sets the callback for retry operations. It will be called before the library attempts to re-send the message and has the following parameters:
 
 | Parameter | Description |
 | --- | --- |
@@ -179,6 +181,8 @@ Sets the callback for retry operations. It will be called before the library att
 | *drop* | A function which disposes of the message. It takes two optional parameters: *silently*, which defaults to `true` and which governs whether the disposal takes place silently or through the *onFail* callbacks, and *error* which if *silently* is `false`, specifies the error message to be provided to the *onFail* callback |
 
 The *skip* and *drop* functions must be called synchronously, if they are called at all.
+
+#### Example ####
 
 ```squirrel
 mm.beforeRetry(
@@ -191,12 +195,12 @@ mm.beforeRetry(
             skip(duration);
         }
     }
-)
+);
 ```
 
-<div id="mmanager_on_fail"><h4>MessageManager.onFail(<i>callback</i>)</h4></div>
+<div id="mmanager_on_fail"><h3>MessageManager.onFail(<i>callback</i>)</h3></div>
 
-Sets the callack to be called when a message error occurs. The callback has the following parameters:
+This method sets the function to be called when a message error occurs. The callback has the following parameters:
 
 | Parameter | Description |
 | --- | --- |
@@ -204,18 +208,20 @@ Sets the callack to be called when a message error occurs. The callback has the 
 | *reason* | The error description string |
 | *retry* | A function that can be invoked to retry sending the message in a specified period of time. This function must be called synchronously, if it is called at all. It takes one parameter, *interval*. If there is no *interval* parameter specified, the *retryInterval* value provided for *MessageManager* [constructor](#mmanager) is used. If the function is not called, the message will expire |
 
+#### Example ####
+
 ```squirrel
 mm.onFail(
     function(msg, error, retry) {
         // Always retry to send the message
         retry();
     }
-)
+);
 ```
 
-<div id="mmanager_on_timeout"><h4>MessageManager.onTimeout(<i>callback</i>)</h4></div>
+<div id="mmanager_on_timeout"><h3>MessageManager.onTimeout(<i>callback</i>)</h3></div>
 
-Sets the callback to be called when a message timeout occurs. The callback has the following parameters:
+This method sets the callback to be executed when a message timeout occurs. The callback has the following parameters:
 
 | Parameter | Description |
 | --- | --- |
@@ -224,6 +230,8 @@ Sets the callback to be called when a message timeout occurs. The callback has t
 | *fail* | A function which makes the message fall through the *onFail* callbacks |
 
 If neither *wait* nor *fail* are called, the message will expire.
+
+#### Example ####
 
 ```squirrel
 mm.onTimeout(
@@ -238,13 +246,15 @@ mm.onTimeout(
 );
 ```
 
-<div id="mmanager_on_ack"><h4>MessageManager.onAck(<i>callback</i>)</h4></div>
+<div id="mmanager_on_ack"><h3>MessageManager.onAck(<i>callback</i>)</h3></div>
 
-Sets the callback to be called when the message’s receipt is acknowledged. The callback has the following parameters:
+This method sets the callback to be executed when the message’s receipt is acknowledged. The callback has the following parameters:
 
 | Parameter | Description |
 | --- | --- |
 | *message* | An instance of [DataMessage](#mmanager_data_message) that was acknowledged |
+
+#### Example ####
 
 ```squirrel
 mm.onAck(
@@ -252,39 +262,43 @@ mm.onAck(
         // Just log the ACK event
         server.log("ACK received for " + msg.payload.data);
     }
-)
+);
 ```
 
-**NOTE:** a message is only acked if the receiving party has a handler for this message defined.
+**Note** A message is only acknowledged if the receiving party has defined a callback for this message.
 
-<div id="mmanager_on_reply"><h4>MessageManager.onReply(<i>handler</i>)</h4></div>
+<div id="mmanager_on_reply"><h3>MessageManager.onReply(<i>callback</i>)</h3></div>
 
-Sets the callback to be called when the message is replied to. The callback has the following parameters:
+This method sets the callback to be executed when the message is replied to. The callback has the following parameters:
 
 | Parameter | Description |
 | --- | --- |
 | *message* | An instance of [DataMessage](#mmanager_data_message) that was replied to |
 | *response* | The response from the partner |
 
+#### Example ####
+
 ```squirrel
 mm.onReply(
     function(msg, response) {
         processResponseFor(msg.payload.data, response);
     }
-)
+);
 ```
 
-**NOTE:** setting the callback doesn't necessarily imply that the other side must reply to the message. It just sets a handler, which is executed when/if the message is replied.
+**Note** Setting the callback doesn’t necessarily imply that the other side must reply to the message. It just registers a function which is executed if and when the message is replied to.
 
-<div id="mmanager_get_pending_count"><h4>MessageManager.getPendingCount()</h4></div>
+<div id="mmanager_get_pending_count"><h3>MessageManager.getPendingCount()</h3></div>
 
-Returns the overall number of pending messages (either waiting for acknowledgement or waiting in the retry queue).
+This method returns the overall number of pending messages (either waiting for acknowledgement or waiting in the retry queue).
+
+#### Example ####
 
 ```squirrel
 if (mm.getPendingCount() < SOME_MAX_PENDING_COUNT) {
     mm.send("temp", temp);
 } else {
-    // do something else
+    // Do something else
 }
 ```
 
@@ -292,31 +306,31 @@ if (mm.getPendingCount() < SOME_MAX_PENDING_COUNT) {
 
 MessageManager.DataMessage instances are not intended to be created by users manually &mdash; they are always returned from the [MessageManager.send()](#mmanager_send) method.
 
-<div id="mmanager_data_message_on_fail"><h4>MessageManager.DataMessage.onFail()</h4></div>
+<div id="mmanager_data_message_on_fail"><h3>MessageManager.DataMessage.onFail()</h3></div>
 
-Sets a message-local version of the [MessageManager.onFail()](#mmanager_on_fail) handler.
+This method sets a message-local version of the [MessageManager.onFail()](#mmanager_on_fail) callback.
 
-<div id="mmanager_data_message_on_timeout"><h4>MessageManager.DataMessage.onTimeout()</h4></div>
+<div id="mmanager_data_message_on_timeout"><h3>MessageManager.DataMessage.onTimeout()</h3></div>
 
-Sets a message-local version of the [MessageManager.onTimeout()](#mmanager_on_timeout) handler.
+This method sets a message-local version of the [MessageManager.onTimeout()](#mmanager_on_timeout) callback.
 
-<div id="mmanager_data_message_on_ack"><h4>MessageManager.DataMessage.onAck()</h4></div>
+<div id="mmanager_data_message_on_ack"><h3>MessageManager.DataMessage.onAck()</h3></div>
 
-Sets a message-local version of the [MessageManager.onAck()](#mmanager_on_ack) handler.
+This method sets a message-local version of the [MessageManager.onAck()](#mmanager_on_ack) callback.
 
-<div id="mmanager_data_message_on_reply"><h4>MessageManager.DataMessage.onReply()</h4></div>
+<div id="mmanager_data_message_on_reply"><h3>MessageManager.DataMessage.onReply()</h3></div>
 
-Sets a message-local version of the [MessageManager.onReply()](#mmanager_on_reply) handler.
+This method sets a message-local version of the [MessageManager.onReply()](#mmanager_on_reply) callback.
 
-### Other Usage Examples
+## Other Usage Examples ##
 
-#### Integration with [ConnectionManager](https://github.com/electricimp/ConnectionManager)
+### Integration with [ConnectionManager](https://github.com/electricimp/ConnectionManager) ###
 
 ```squirrel
 // Device code
 
 #require "ConnectionManager.lib.nut:3.0.0"
-#require "MessageManager.lib.nut:2.3.0"
+#require "MessageManager.lib.nut:2.4.0"
 
 local cm = ConnectionManager({
     "blinkupBehavior": CM_BLINK_ALWAYS,
@@ -359,16 +373,16 @@ sendData();
 ```squirrel
 // Agent code
 
-#require "MessageManager.lib.nut:2.3.0"
+#require "MessageManager.lib.nut:2.4.0"
 
 local mm = MessageManager();
 
 mm.on("name", function(message, reply) {
-    server.log("message received: " + message.data);
+    server.log("Message received: " + message.data);
     reply("Got it!");
 });
 ```
 
-## License
+## License ##
 
-MessageManager is licensed under the [MIT License](./LICENSE).
+This library is licensed under the [MIT License](./LICENSE).
