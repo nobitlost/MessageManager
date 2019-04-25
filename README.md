@@ -1,7 +1,5 @@
 # MessageManager 2.4.0 #
 
-[![Build Status](https://api.travis-ci.org/electricimp/MessageManager.svg?branch=master)](https://travis-ci.org/electricimp/MessageManager)
-
 MessageManager is framework for asynchronous bidirectional agent to device communication. It is the successor to [Bullwinkle](https://github.com/electricimp/Bullwinkle).
 
 The library uses [ConnectionManager](https://github.com/electricimp/ConnectionManager) on the device side to receive notifications of connection and disconnection events, and to monitor connection status (ie. so that no attempt it made to send messages when the device is disconnected).
@@ -9,6 +7,8 @@ The library uses [ConnectionManager](https://github.com/electricimp/ConnectionMa
 **To include this library in your project, add** `#require "MessageManager.lib.nut:2.4.0"` **at the top of your agent and device code.**
 
 **Note** MessageManager is designed to run over reliable (ie. TCP/TLS) connections. Retries only occur in the case of dropped connections or lost packets, or if called manually from [*beforeSend()*](#mmanager_before_send) or [*beforeRetry()*](#mmanager_before_retry).
+
+![Build Status](https://cse-ci.electricimp.com/app/rest/builds/buildType:(id:MessageManager_BuildAndTest)/statusIcon)
 
 ## API Overview ##
 
